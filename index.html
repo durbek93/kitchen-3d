@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>3D-Модель объекта: 18 × 6,5 м | Архитектурный макет (Котельная+СУ 2×4м единая комната | Проем без щелей)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.94);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent: #f59e0b;
+      --success: #10b981;
+      --panel-width: 340px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    .interactive {
+      pointer-events: auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title-pill {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      padding: 10px 18px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .title-pill h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .quick-views {
+      display: flex;
+      gap: 6px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-view {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-view:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-view.active {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .side-panel {
+      position: absolute;
+      top: 68px;
+      right: 16px;
+      bottom: 16px;
+      width: var(--panel-width);
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+    }
+
+    .panel-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 8px 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-card.full {
+      grid-column: span 2;
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .stat-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .room-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .room-item {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+    }
+
+    .room-item.r-gazebo { border-left-color: var(--primary); }
+    .room-item.r-winter { border-left-color: var(--accent); }
+    .room-item.r-summer { border-left-color: var(--success); }
+    .room-item.r-utility { border-left-color: #a855f7; }
+
+    .room-item strong {
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .room-item span {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .btn-action {
+      background: var(--primary);
+      color: #0f172a;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .bottom-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .help-tooltip {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      padding: 8px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 16px;
+    }
+
+    .help-tooltip kbd {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .label-3d {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(8px);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      pointer-events: none;
+      white-space: nowrap;
+      user-select: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: opacity 0.15s ease;
+    }
+
+    .range-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #334155;
+      outline: none;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    #labels-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 12;
+    }
+
+    .btn-mode {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .btn-mode.active {
+      background: var(--primary);
+      color: #0f172a;
+      border-color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="canvas-container"></div>
+  <div id="labels-container"></div>
+
+  <div class="ui-layer">
+    <div class="top-bar">
+      <div class="title-pill interactive">
+        <h1>Кухонный комплекс 18.95 × 6.85 м (КК-1895-АС-01)</h1>
+        <span class="status-badge">1 : 1 Масштаб</span>
+      </div>
+
+      <div class="quick-views interactive" style="background: rgba(15, 23, 42, 0.85); border-color: rgba(56, 189, 248, 0.3);">
+        <button id="btn-mode-rotate" class="btn-mode active" onclick="setInteractionMode('rotate')" title="Вращение камеры левой кнопкой мыши">🔄 Вращение</button>
+        <button id="btn-mode-pan" class="btn-mode" onclick="setInteractionMode('pan')" title="Перетаскивание постройки левой кнопкой мыши">✋ Перетаскивание</button>
+      </div>
+
+      <div class="quick-views interactive">
+        <button class="btn-view active" onclick="setView('perspective')">3D Перспектива</button>
+        <button class="btn-view" onclick="setView('front')">Фасад (Двор)</button>
+        <button class="btn-view" onclick="setView('top')">План сверху</button>
+        <button class="btn-view" onclick="setView('gazebo')">Беседка</button>
+        <button class="btn-view" onclick="setView('summer')">Летняя кухня</button>
+        <button class="btn-view" onclick="setView('utility')">Котельная + С/У</button>
+        <button class="btn-view" onclick="setView('bottom')" title="Осмотр снизу: фундамент, разводка труб и канализация">Вид снизу (Трубы/СУ)</button>
+      </div>
+    </div>
+
+    <div class="side-panel interactive">
+      <div class="panel-section">
+        <span class="panel-title">Слои и элементы</span>
+
+        <div class="control-row">
+          <span>Грунт / Земля</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-ground" checked onchange="toggleLayer('ground', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Фундамент (ленты/цоколь)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-plinths" checked onchange="toggleLayer('plinths', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Полы (плиты / стяжка)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-floors" checked onchange="toggleLayer('floors', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35);">
+          <span style="color: #38bdf8; font-weight: 600;">🔍 Рентген полов (для труб)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-xray" onchange="toggleFloorXray(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Крыша (односкатная)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-roof" onchange="toggleLayer('roof', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Парапетная стена (75 см)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-parapet" checked onchange="toggleLayer('parapet', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>ЖБ-плиты перекрытия</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-slabs" checked onchange="toggleLayer('slabs', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Стены (жжёный кирпич)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-walls" checked onchange="toggleLayer('walls', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Колонны и армопояс</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-columns" checked onchange="toggleLayer('columns', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Остекление (прозрачное)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-glass" checked onchange="toggleLayer('glass', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+          <div style="display: flex; justify-content: space-between; width: 100%;">
+            <span>Прозрачность надписей и линий</span>
+            <span id="opacity-val" style="font-weight: 700; color: var(--primary);">85%</span>
+          </div>
+          <input type="range" min="0" max="100" value="85" class="range-slider" id="dim-opacity-slider" oninput="updateDimOpacity(this.value)">
+        </div>
+
+        <div class="control-row">
+          <span>Показывать выноски</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-dims" checked onchange="toggleLayer('dimensions', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <span class="panel-title">Экспликация помещений</span>
+        <div class="stats-grid">
+          <div class="stat-card full">
+            <span class="stat-val">129.8 м² (103.3 м² полезная)</span>
+            <span class="stat-label">Комплекс 18.95 × 6.85 м (КК-1895-АС-01)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val">21.78 м²</span>
+            <span class="stat-label">Беседка / Терраса (3.60 × 6.05 м)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val">58.08 м²</span>
+            <span class="stat-label">Зимняя кухня-студия (9.60 × 6.05 м)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-val">15.80 м²</span>
+            <span class="stat-label">Летняя кухня / барбекю (4.00 × 3.95 м)</span>
+          </div>
+          <div class="stat-card full" style="background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.35);">
+            <span class="stat-val">7.60 м²</span>
+            <span class="stat-label">Санузел + котельная (4.00 × 1.90 м)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <span class="panel-title">Спецификация проёмов (по чертежу)</span>
+        <div class="room-list">
+          <div class="room-item r-winter">
+            <strong>ОК-1..4: Витражные окна 1.50 × 2.45 м (4 шт.)</strong>
+            <span>3 окна на фасад (модульные простенки 1.15 м) + 1 окно сзади</span>
+          </div>
+          <div class="room-item r-gazebo">
+            <strong>ВП-1: Витражный портал 4.05 × 2.90 м</strong>
+            <span>4 створки: 2 глухих по бокам + 2 раздвижные двери по центру</span>
+          </div>
+          <div class="room-item r-utility">
+            <strong>Д-1: Дверной блок с/у 0.80 × 2.10 м</strong>
+            <span>Вход из зимней кухни в топочную/санузел</span>
+          </div>
+          <div class="room-item r-utility" style="border-left-color: #38bdf8;">
+            <strong>Форточка с/у 0.80 × 0.50 м</strong>
+            <span>Торцевое проветривание котельной</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <button class="btn-action" onclick="resetView()">
+          ⟲ Сбросить положение камеры
+        </button>
+        <button class="btn-action btn-secondary" onclick="takeScreenshot()">
+          📷 Сделать снимок (PNG)
+        </button>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <div class="help-tooltip interactive">
+        <span><kbd>ЛКМ</kbd> Вращение (или Перетаскивание в режиме "✋")</span>
+        <span><kbd>ПКМ / Shift+ЛКМ</kbd> Перетаскивание</span>
+        <span><kbd>Колесико</kbd> Масштаб</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./libs/three.min.js?v=2"></script>
+  <script src="./libs/OrbitControls.js?v=2"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a);
+    scene.fog = new THREE.FogExp2(0x0f172a, 0.010);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(22, 16, 26);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI - 0.01; // Свободное вращение 360° (можно смотреть снизу под фундамент)
+    controls.minPolarAngle = 0.01;
+    controls.minDistance = 3;
+    controls.maxDistance = 80;
+    controls.target.set(0, 1.5, 0);
+    controls.screenSpacePanning = true;
+
+    let currentInteractionMode = 'rotate';
+
+    function setInteractionMode(mode) {
+      currentInteractionMode = mode;
+      const btnRot = document.getElementById('btn-mode-rotate');
+      const btnPan = document.getElementById('btn-mode-pan');
+      if (btnRot) btnRot.classList.toggle('active', mode === 'rotate');
+      if (btnPan) btnPan.classList.toggle('active', mode === 'pan');
+
+      if (mode === 'pan') {
+        controls.mouseButtons = {
+          LEFT: THREE.MOUSE.PAN,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.ROTATE
+        };
+        renderer.domElement.style.cursor = 'grab';
+      } else {
+        controls.mouseButtons = {
+          LEFT: THREE.MOUSE.ROTATE,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.PAN
+        };
+        renderer.domElement.style.cursor = 'default';
+      }
+    }
+
+    renderer.domElement.addEventListener('mousedown', () => {
+      if (currentInteractionMode === 'pan') renderer.domElement.style.cursor = 'grabbing';
+    });
+    renderer.domElement.addEventListener('mouseup', () => {
+      if (currentInteractionMode === 'pan') renderer.domElement.style.cursor = 'grab';
+    });
+
+    // --- Lighting ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.55);
+    sunLight.position.set(25, 35, 20);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 80;
+    sunLight.shadow.camera.left = -22;
+    sunLight.shadow.camera.right = 22;
+    sunLight.shadow.camera.top = 22;
+    sunLight.shadow.camera.bottom = -22;
+    sunLight.shadow.bias = -0.0005;
+    scene.add(sunLight);
+
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.65);
+    fillLight.position.set(-20, 20, -20);
+    scene.add(fillLight);
+
+    // Warm interior lights so inside spaces glow and are clearly visible through transparent glass
+    const intStudioLight1 = new THREE.PointLight(0xfffaed, 1.4, 15);
+    intStudioLight1.position.set(-2.5, 2.3, 0);
+    scene.add(intStudioLight1);
+
+    const intStudioLight2 = new THREE.PointLight(0xfffaed, 1.4, 15);
+    intStudioLight2.position.set(2.5, 2.3, 0);
+    scene.add(intStudioLight2);
+
+    const intGazeboLight = new THREE.PointLight(0xfffaed, 0.9, 12);
+    intGazeboLight.position.set(6.9, 2.3, 0);
+    scene.add(intGazeboLight);
+
+    const intSummerLight = new THREE.PointLight(0xfffaed, 0.9, 12);
+    intSummerLight.position.set(-6.9, 2.3, 0);
+    scene.add(intSummerLight);
+
+    // Light inside the unified 2x4m utility room
+    const intUtilityLight = new THREE.PointLight(0xfffaed, 1.1, 10);
+    intUtilityLight.position.set(-6.9, 2.3, -2.0);
+    scene.add(intUtilityLight);
+
+    // --- Нижнее инженерное освещение (для фундамента и коммуникаций снизу) ---
+    const bottomLight = new THREE.DirectionalLight(0xf8fafc, 1.3);
+    bottomLight.position.set(0, -35, 0);
+    bottomLight.target.position.set(0, 0, 0);
+    scene.add(bottomLight);
+    scene.add(bottomLight.target);
+
+    const bottomFill1 = new THREE.DirectionalLight(0x93c5fd, 0.85);
+    bottomFill1.position.set(-20, -20, 20);
+    scene.add(bottomFill1);
+
+    const bottomFill2 = new THREE.DirectionalLight(0xfef08a, 0.85);
+    bottomFill2.position.set(20, -20, -20);
+    scene.add(bottomFill2);
+
+    // ==========================================
+    // PROCEDURAL TEXTURES (Реалистичный жжёный кирпич по фото)
+    // ==========================================
+    function createBurntBrickTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Mortar background
+      ctx.fillStyle = '#b8b2a8';
+      ctx.fillRect(0, 0, 512, 512);
+
+      const rows = 16;
+      const rowH = 512 / rows;
+      const brickW = 64;
+
+      const colors = ['#c25c38', '#b8512e', '#cc6642', '#a64426', '#b04928', '#9e3d21', '#8c351b', '#d4714d'];
+
+      for (let r = 0; r < rows; r++) {
+        const y = r * rowH;
+        const offset = (r % 2) * (brickW / 2);
+        for (let x = -brickW; x < 512 + brickW; x += brickW) {
+          const colIdx = Math.floor(Math.random() * colors.length);
+          ctx.fillStyle = colors[colIdx];
+          ctx.fillRect(x + offset + 2, y + 2, brickW - 4, rowH - 4);
+
+          ctx.fillStyle = 'rgba(0, 0, 0, ' + (Math.random() * 0.18) + ')';
+          ctx.fillRect(x + offset + 2, y + 2, brickW - 4, rowH - 4);
+        }
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(1, 1);
+      return texture;
+    }
+
+    const brickTexture = createBurntBrickTexture();
+
+    // --- Materials ---
+    const concreteMat = new THREE.MeshStandardMaterial({
+      color: 0xcccccc,
+      roughness: 0.85,
+      metalness: 0.05
+    });
+
+    const brickMat = new THREE.MeshStandardMaterial({
+      map: brickTexture,
+      roughness: 0.88,
+      metalness: 0.02
+    });
+
+    const parapetCapMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.35,
+      metalness: 0.5
+    });
+
+    const slabMat = new THREE.MeshStandardMaterial({
+      color: 0xd1d5db,
+      roughness: 0.80,
+      metalness: 0.05
+    });
+
+    const roofMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.4,
+      metalness: 0.35,
+      side: THREE.DoubleSide
+    });
+
+    const timberMat = new THREE.MeshStandardMaterial({
+      color: 0xbc9470,
+      roughness: 0.75,
+      metalness: 0.05
+    });
+
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0xe2f1fd,
+      transparent: true,
+      opacity: 0.22,
+      roughness: 0.05,
+      metalness: 0.1,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.45,
+      metalness: 0.4
+    });
+
+    const handleMat = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      roughness: 0.2,
+      metalness: 0.8
+    });
+
+    const doorLeafMat = new THREE.MeshStandardMaterial({
+      color: 0x64748b,
+      roughness: 0.6,
+      metalness: 0.1
+    });
+
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.95
+    });
+
+    const plinthMat = new THREE.MeshStandardMaterial({
+      color: 0xb0b5bd,
+      roughness: 0.9
+    });
+
+    const gravelMat = new THREE.MeshStandardMaterial({
+      color: 0x64748b,
+      roughness: 0.95
+    });
+
+    const edgeLineMat = new THREE.LineBasicMaterial({
+      color: 0x475569,
+      linewidth: 1
+    });
+
+    let currentDimOpacity = 0.85;
+
+    const parapetGroup = new THREE.Group();
+    const slabsGroup = new THREE.Group();
+    const pitchedRoofGroup = new THREE.Group();
+    const wallsGroup = new THREE.Group();
+    const columnsGroup = new THREE.Group();
+    const glassGroup = new THREE.Group();
+    const dimensionsGroup = new THREE.Group();
+    const plinthsGroup = new THREE.Group();
+    const floorsGroup = new THREE.Group();
+    const groundGroup = new THREE.Group();
+
+    scene.add(parapetGroup);
+    scene.add(slabsGroup);
+    scene.add(pitchedRoofGroup);
+    scene.add(wallsGroup);
+    scene.add(columnsGroup);
+    scene.add(glassGroup);
+    scene.add(dimensionsGroup);
+    scene.add(plinthsGroup);
+    scene.add(floorsGroup);
+    scene.add(groundGroup);
+
+    pitchedRoofGroup.visible = false;
+
+    function createBox(w, h, d, mat, group, castShadow = true, receiveShadow = true) {
+      const geom = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.castShadow = castShadow;
+      mesh.receiveShadow = receiveShadow;
+      
+      const edges = new THREE.EdgesGeometry(geom);
+      const line = new THREE.LineSegments(edges, edgeLineMat);
+      mesh.add(line);
+
+      group.add(mesh);
+      return mesh;
+    }
+
+    function createBoxWithMetricUV(w, h, d, mat, group, castShadow = true, receiveShadow = true, tileScale = 0.70) {
+      const geom = new THREE.BoxGeometry(w, h, d);
+      const uv = geom.attributes.uv;
+
+      const uScale = [
+        d / tileScale, d / tileScale,
+        w / tileScale, w / tileScale,
+        w / tileScale, w / tileScale
+      ];
+      const vScale = [
+        h / tileScale, h / tileScale,
+        d / tileScale, d / tileScale,
+        h / tileScale, h / tileScale
+      ];
+
+      for (let f = 0; f < 6; f++) {
+        for (let v = 0; v < 4; v++) {
+          const idx = (f * 4 + v) * 2;
+          uv.array[idx] *= uScale[f];
+          uv.array[idx + 1] *= vScale[f];
+        }
+      }
+      uv.needsUpdate = true;
+
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.castShadow = castShadow;
+      mesh.receiveShadow = receiveShadow;
+
+      const edges = new THREE.EdgesGeometry(geom);
+      const line = new THREE.LineSegments(edges, edgeLineMat);
+      mesh.add(line);
+
+      group.add(mesh);
+      return mesh;
+    }
+
+    const T = 0.40;
+    const PLINTH_H = 0.35;
+    const WALL_TOP = 3.20;
+    const SLAB_THICK = 0.22;
+    const RING_BEAM_H = 0.57; // from 2.85 to 3.42m
+    const RING_BEAM_BOT = 2.85;
+    const PARAPET_H = 0.75;
+
+    // Ground plane & grid (в группе groundGroup для скрытия при виде снизу)
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(50, 40), groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.01;
+    ground.receiveShadow = true;
+    groundGroup.add(ground);
+
+    const grid = new THREE.GridHelper(40, 40, 0x334155, 0x1e293b);
+    grid.position.y = 0.01;
+    groundGroup.add(grid);
+
+    // ==========================================
+    // 1. PLINTH & FOUNDATION (18.95 × 6.85 м)
+    // ==========================================
+    function buildPlinths() {
+      // Фундаментные ленты и цоколь (plinthsGroup)
+      const pBack = createBox(18.95, PLINTH_H, T, plinthMat, plinthsGroup);
+      pBack.position.set(0, PLINTH_H / 2, -3.225);
+
+      const pFront = createBox(18.95, PLINTH_H, T, plinthMat, plinthsGroup);
+      pFront.position.set(0, PLINTH_H / 2, 3.225);
+
+      // Торцевые фундаментные ленты
+      const pLeftEnd = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
+      pLeftEnd.position.set(-9.275, PLINTH_H / 2, 0);
+
+      const pRightEnd = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
+      pRightEnd.position.set(9.275, PLINTH_H / 2, 0);
+
+      // Поперечные ленты по Осям 2 и 3
+      const pTrans1 = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
+      pTrans1.position.set(-4.875, PLINTH_H / 2, 0);
+
+      const pTrans2 = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
+      pTrans2.position.set(5.275, PLINTH_H / 2, 0);
+
+      // Фундаментная лента под перегородку санузла/котельной (для трассировки труб)
+      const pUtilDiv = createBox(4.00, PLINTH_H, 0.20, plinthMat, plinthsGroup);
+      pUtilDiv.position.set(-7.075, PLINTH_H / 2, -1.025);
+
+      // Плиты пола помещений (floorsGroup — отключаемые или полупрозрачные в режиме рентгена)
+      // 1) Пол беседки: 3.60 x 6.05 м
+      const fGazebo = createBox(3.60, PLINTH_H, 6.05, concreteMat.clone(), floorsGroup);
+      fGazebo.position.set(7.275, PLINTH_H / 2, 0);
+
+      // 2) Пол летней кухни: 4.00 x 3.95 м
+      const fSummer = createBox(4.00, PLINTH_H, 3.95, gravelMat.clone(), floorsGroup);
+      fSummer.position.set(-7.075, PLINTH_H / 2, 1.05);
+
+      // 3) Пол санузла/котельной: 4.00 x 1.90 м
+      const fUtil = createBox(4.00, PLINTH_H, 1.90, concreteMat.clone(), floorsGroup);
+      fUtil.position.set(-7.075, PLINTH_H / 2, -2.075);
+
+      // 4) Пол зимней кухни-студии: 9.75 x 6.05 м
+      const fWinter = createBox(9.75, PLINTH_H, 6.05, concreteMat.clone(), floorsGroup);
+      fWinter.position.set(0.20, PLINTH_H / 2, 0);
+    }
+    buildPlinths();
+
+    // ==========================================
+    // 2. MONOLITHIC RING BEAM & FRAME COLUMNS
+    // ==========================================
+    function buildBeamsAndColumns() {
+      const ringY = RING_BEAM_BOT + RING_BEAM_H / 2; // 3.135m
+
+      const beamBack = createBox(18.95, RING_BEAM_H, T, concreteMat, columnsGroup);
+      beamBack.position.set(0, ringY, -3.225);
+
+      const beamFront = createBox(18.95, RING_BEAM_H, T, concreteMat, columnsGroup);
+      beamFront.position.set(0, ringY, 3.225);
+
+      const beamLeftEnd = createBox(T, RING_BEAM_H, 6.05, concreteMat, columnsGroup);
+      beamLeftEnd.position.set(-9.275, ringY, 0);
+
+      const beamRightEnd = createBox(T, RING_BEAM_H, 6.05, concreteMat, columnsGroup);
+      beamRightEnd.position.set(9.275, ringY, 0);
+
+      const intBeamY = 2.85 + 0.35 / 2;
+      const beamMid1 = createBox(T, 0.35, 6.05, concreteMat, columnsGroup);
+      beamMid1.position.set(-4.875, intBeamY, 0);
+
+      const beamMid2 = createBox(T, 0.35, 6.05, concreteMat, columnsGroup);
+      beamMid2.position.set(5.275, intBeamY, 0);
+
+      const uBeam = createBox(4.00, 0.35, 0.20, concreteMat, columnsGroup);
+      uBeam.position.set(-7.075, intBeamY, -1.025);
+
+      const colHeight = 2.85 - PLINTH_H; // 2.50m
+      const colY = PLINTH_H + colHeight / 2;
+
+      // 10 structural monolithic columns 400x400 mm
+      const colPositions = [
+        [-9.275, 3.225], [-9.275, -3.225],  // Axis 1
+        [-4.875, 3.225], [-4.875, -3.225],  // Axis 2
+        [0.725, 3.225],  [0.725, -3.225],   // Intermediate column between windows
+        [5.275, 3.225],  [5.275, -3.225],   // Axis 3
+        [9.275, 3.225],  [9.275, -3.225]    // Axis 4
+      ];
+
+      colPositions.forEach(([x, z]) => {
+        const col = createBox(T, colHeight, T, concreteMat, columnsGroup);
+        col.position.set(x, colY, z);
+      });
+    }
+    buildBeamsAndColumns();
+
+    // ==========================================
+    // 3. WALLS & DOORWAYS (СТРОГО ПО ЧЕРТЕЖУ КК-1895-АС-01)
+    // ==========================================
+    function buildWalls() {
+      const wallH = 2.50; // clear height under beams
+      const wallY = PLINTH_H + wallH / 2;
+
+      // --- ЛЕТНЯЯ КУХНЯ И САНУЗЕЛ/ТОПОЧНАЯ (БЛОК 1: X в [-9.075, -5.075]) ---
+      // Форточка санузла/котельной (0.80 x 0.50 м, ось Z = -2.075)
+      const sEndBot = createBoxWithMetricUV(0.38, 1.60, 1.90, brickMat, wallsGroup);
+      sEndBot.position.set(-9.275, PLINTH_H + 1.60 / 2, -2.075);
+
+      const fSide1 = createBoxWithMetricUV(0.38, 0.50, 0.55, brickMat, wallsGroup);
+      fSide1.position.set(-9.275, PLINTH_H + 1.60 + 0.25, -2.75);
+
+      const fSide2 = createBoxWithMetricUV(0.38, 0.50, 0.55, brickMat, wallsGroup);
+      fSide2.position.set(-9.275, PLINTH_H + 1.60 + 0.25, -1.40);
+
+      const fTopH = wallH - (1.60 + 0.50); // 0.40m
+      const sEndTop = createBoxWithMetricUV(0.38, fTopH, 1.90, brickMat, wallsGroup);
+      sEndTop.position.set(-9.275, PLINTH_H + 2.10 + fTopH / 2, -2.075);
+
+      buildTransomWindow(-9.275, -2.075, 0.80, 0.50);
+
+      // Глухая стена летней кухни вдоль торца (Z: -1.125 до +3.025 = 4.15м)
+      const sEndMain = createBoxWithMetricUV(0.38, wallH, 4.15, brickMat, wallsGroup);
+      sEndMain.position.set(-9.275, wallY, 0.95);
+
+      // Задняя стена санузла/котельной (X: -9.075 до -5.075 = 4.00м)
+      const sRearWall = createBoxWithMetricUV(4.00, wallH, 0.38, brickMat, wallsGroup);
+      sRearWall.position.set(-7.075, wallY, -3.225);
+
+      // Перегородка между летней кухней и санузлом (Z = -1.025, длина 4.00м, толщина 0.20м)
+      const utilDivider = createBoxWithMetricUV(4.00, wallH, 0.20, brickMat, wallsGroup);
+      utilDivider.position.set(-7.075, wallY, -1.025);
+
+      // --- РАЗДЕЛИТЕЛЬНАЯ СТЕНА ПО ОСИ 2 (X = -4.875) ---
+      const doorH = 2.10;
+      const doorW = 0.80;
+      const lintelH = wallH - doorH; // 0.40m
+
+      // 1. Кирпичный простенок слева от двери (Z: -3.025 до -2.475 = 0.55м)
+      const wSepLeft = createBoxWithMetricUV(0.40, wallH, 0.55, brickMat, wallsGroup);
+      wSepLeft.position.set(-4.875, wallY, -2.75);
+
+      // 2. Кирпичная перемычка над дверью Д-1 (по центру с/у: Z: -2.475 до -1.675, центр Z = -2.075)
+      const wDoorLintel = createBoxWithMetricUV(0.40, lintelH, doorW, brickMat, wallsGroup);
+      wDoorLintel.position.set(-4.875, PLINTH_H + doorH + lintelH / 2, -2.075);
+
+      // 3. Основная стена справа от двери до фасада (Z: -1.675 до +3.025 = 4.70м)
+      const wSepMid = createBoxWithMetricUV(0.40, wallH, 4.70, brickMat, wallsGroup);
+      wSepMid.position.set(-4.875, wallY, 0.675);
+
+      // Дверной блок Д-1 (0.80 × 2.10 м, центр Z = -2.075 - строго по центру стены с/у и соосно форточке!)
+      buildDoorway(-4.875, -2.075, doorW, doorH, true);
+
+      // --- ФАСАД ЗИМНЕЙ КУХНИ (ПО ЧЕРТЕЖУ КК-1895-АС-01 1:1, Z = 3.225) ---
+      const winW = 1.50; // Витражные окна 1.50 × 2.45 м (ОК-2, ОК-3, ОК-4)
+      const sillH = 0.38; // 5 рядов кирпича под окнами (~38 см)
+      const openH = wallH - sillH; // 2.12м в свету
+
+      // 1. Глухая стена 2.95 м (X: -4.675 до -1.725)
+      const pierBlind = createBoxWithMetricUV(2.96, wallH, 0.40, brickMat, wallsGroup);
+      pierBlind.position.set(-3.20, wallY, 3.225);
+
+      // 2. Окно ОК-2 (1.50 × 2.45 м, центр X = -0.975)
+      const sill2 = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
+      sill2.position.set(-0.975, PLINTH_H + sillH / 2, 3.225);
+      buildWindow(-0.975, 3.225, winW, openH, sillH);
+
+      // 3. Модульный простенок 1.15 м между ОК-2 и ОК-3:
+      // - 75 см жжёный кирпич (X: -0.225 до +0.525, ширина 0.76м с микрозаходом в колонну - зазор устранён!)
+      const pier2Brick = createBoxWithMetricUV(0.76, wallH, 0.40, brickMat, wallsGroup);
+      pier2Brick.position.set(0.155, wallY, 3.225);
+      // (40 см ж/б колонна на X = +0.725 уже возведена в buildBeamsAndColumns)
+
+      // 4. Окно ОК-3 (1.50 × 2.45 м, центр X = +1.675)
+      const sill3 = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
+      sill3.position.set(1.675, PLINTH_H + sillH / 2, 3.225);
+      buildWindow(1.675, 3.225, winW, openH, sillH);
+
+      // 5. Модульный простенок 1.15 м между ОК-3 и ОК-4 (жжёный кирпич: X: +2.425 до +3.575)
+      const pier3Brick = createBoxWithMetricUV(1.16, wallH, 0.40, brickMat, wallsGroup);
+      pier3Brick.position.set(3.00, wallY, 3.225);
+
+      // 6. Окно ОК-4 (1.50 × 2.45 м, центр X = +4.325, вплотную к колонне Оси 3)
+      const sill4 = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
+      sill4.position.set(4.325, PLINTH_H + sillH / 2, 3.225);
+      buildWindow(4.325, 3.225, winW, openH, sillH);
+
+      // --- ЗАДНЯЯ СТЕНА ЗИМНЕЙ КУХНИ (СТРОГО СООСНО ФАСАДУ 1:1, Z = -3.225) ---
+      // 1. Глухой участок слева от ОК-1 (2.95 м, X: -4.675 до -1.725)
+      const rWall1 = createBoxWithMetricUV(2.96, wallH, 0.40, brickMat, wallsGroup);
+      rWall1.position.set(-3.20, wallY, -3.225);
+
+      // 2. Окно ОК-1 (1.50 × 2.45 м, центр X = -0.975 - СТРОГО СООСНО ОКНУ ОК-2 НАПРОТИВ!)
+      const rSill = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
+      rSill.position.set(-0.975, PLINTH_H + sillH / 2, -3.225);
+      buildWindow(-0.975, -3.225, winW, openH, sillH);
+
+      // 3. Кирпичный простенок 0.75 м между ОК-1 и промежуточной колонной (X: -0.225 до +0.525)
+      // (Восстановлена кладка 0.75м по скриншоту 2, плотная стыковка без зазоров)
+      const rPierBrick = createBoxWithMetricUV(0.76, wallH, 0.40, brickMat, wallsGroup);
+      rPierBrick.position.set(0.155, wallY, -3.225);
+
+      // 4. Глухой участок справа от промежуточной колонны (X: +0.925 до +5.075 = 4.15м)
+      const rWall2 = createBoxWithMetricUV(4.16, wallH, 0.40, brickMat, wallsGroup);
+      rWall2.position.set(3.00, wallY, -3.225);
+
+      // --- РАЗДЕЛИТЕЛЬНАЯ СТЕНА ПО ОСИ 3 И ВИТРАЖ ВП-1 (X = +5.275) ---
+      // Портал ВП-1 (пролёт 4.05 м, центр Z = 0.0)
+      const portalPierBack = createBoxWithMetricUV(0.40, wallH, 1.00, brickMat, wallsGroup);
+      portalPierBack.position.set(5.275, wallY, -2.525);
+
+      const portalPierFront = createBoxWithMetricUV(0.40, wallH, 1.00, brickMat, wallsGroup);
+      portalPierFront.position.set(5.275, wallY, 2.525);
+
+      build4SectionVitraj(5.275, 0, 4.05, wallH);
+
+      // --- КЛАДКА БЕСЕДКИ (ПО КЛАДОЧНОМУ ПЛАНУ КК-1895-АС-01 И ФОТО) ---
+      // 1. Продольные кирпичные простенки у Оси 4 (X: +8.265 до +9.085, длина 0.82 м, толщина 0.40 м)
+      const gazPierAx4Back = createBoxWithMetricUV(0.82, wallH, 0.40, brickMat, wallsGroup);
+      gazPierAx4Back.position.set(8.675, wallY, -3.225);
+
+      const gazPierAx4Front = createBoxWithMetricUV(0.82, wallH, 0.40, brickMat, wallsGroup);
+      gazPierAx4Front.position.set(8.675, wallY, 3.225);
+
+      // 2. Торцевые пилоны беседки по Оси 4 (X = +9.275, Z: ±2.62, длина 0.82 м, толщина 0.40 м - плотно к угловым колоннам без зазоров)
+      const gazPier1 = createBoxWithMetricUV(0.40, wallH, 0.82, brickMat, wallsGroup);
+      gazPier1.position.set(9.275, wallY, -2.62);
+
+      const gazPier2 = createBoxWithMetricUV(0.40, wallH, 0.82, brickMat, wallsGroup);
+      gazPier2.position.set(9.275, wallY, 2.62);
+    }
+    buildWalls();
+
+    function buildWindow(x, z, w, h, sillH) {
+      const winY = PLINTH_H + sillH + h / 2;
+      const fProf = 0.055;
+      const fDepth = 0.08;
+
+      const fTop = createBox(w, fProf, fDepth, frameMat, glassGroup);
+      fTop.position.set(x, winY + h / 2 - fProf / 2, z);
+
+      const fBot = createBox(w, fProf, fDepth, frameMat, glassGroup);
+      fBot.position.set(x, winY - h / 2 + fProf / 2, z);
+
+      const fLeft = createBox(fProf, h - fProf * 2, fDepth, frameMat, glassGroup);
+      fLeft.position.set(x - w / 2 + fProf / 2, winY, z);
+
+      const fRight = createBox(fProf, h - fProf * 2, fDepth, frameMat, glassGroup);
+      fRight.position.set(x + w / 2 - fProf / 2, winY, z);
+
+      const fMid = createBox(0.035, h - fProf * 2, fDepth, frameMat, glassGroup);
+      fMid.position.set(x, winY, z);
+
+      const glass = createBox(w - fProf * 2, h - fProf * 2, 0.012, glassMat, glassGroup, false, false);
+      glass.position.set(x, winY, z);
+    }
+
+    function buildTransomWindow(x, z, w, h) {
+      const winY = PLINTH_H + 1.60 + h / 2;
+      const fProf = 0.045;
+      const fDepth = 0.08;
+
+      const fTop = createBox(fDepth, fProf, w, frameMat, glassGroup);
+      fTop.position.set(x, winY + h / 2 - fProf / 2, z);
+
+      const fBot = createBox(fDepth, fProf, w, frameMat, glassGroup);
+      fBot.position.set(x, winY - h / 2 + fProf / 2, z);
+
+      const fSide1 = createBox(fDepth, h - fProf * 2, fProf, frameMat, glassGroup);
+      fSide1.position.set(x, winY, z - w / 2 + fProf / 2);
+
+      const fSide2 = createBox(fDepth, h - fProf * 2, fProf, frameMat, glassGroup);
+      fSide2.position.set(x, winY, z + w / 2 - fProf / 2);
+
+      const glass = createBox(0.012, h - fProf * 2, w - fProf * 2, glassMat, glassGroup, false, false);
+      glass.position.set(x, winY, z);
+    }
+
+    function buildDoorway(x, z, w, h, isTransverse) {
+      const doorY = PLINTH_H + h / 2;
+      const fProf = 0.05; // 5 cm frame face width
+      const fDepth = 0.38; // full 38 cm wall thickness: clean, solid fit!
+
+      if (isTransverse) {
+        // Left jamb
+        const jamb1 = createBox(fDepth, h, fProf, frameMat, glassGroup);
+        jamb1.position.set(x, doorY, z - w / 2 + fProf / 2);
+
+        // Right jamb
+        const jamb2 = createBox(fDepth, h, fProf, frameMat, glassGroup);
+        jamb2.position.set(x, doorY, z + w / 2 - fProf / 2);
+
+        // Top head
+        const head = createBox(fDepth, fProf, w, frameMat, glassGroup);
+        head.position.set(x, doorY + h / 2 - fProf / 2, z);
+
+        // Open door leaf swung into the utility room (leaving sightline open!)
+        const leafW = w - 0.08;
+        const leafH = h - 0.06;
+        const leaf = createBox(0.04, leafH, leafW, doorLeafMat, glassGroup);
+        leaf.position.set(x - 0.28, doorY, z - 0.15);
+        leaf.rotation.y = -Math.PI / 3.0;
+
+        const hnd = createBox(0.06, 0.12, 0.03, handleMat, glassGroup);
+        hnd.position.set(x - 0.45, doorY, z + 0.10);
+      }
+    }
+
+    function build4SectionVitraj(x, zCenter, totalWidth, height) {
+      const secW = totalWidth / 4;
+      const vitY = PLINTH_H + height / 2;
+      const fProf = 0.06;
+      const fDepth = 0.10;
+
+      const fTop = createBox(fDepth, fProf, totalWidth, frameMat, glassGroup);
+      fTop.position.set(x, vitY + height / 2 - fProf / 2, zCenter);
+
+      const fBot = createBox(fDepth, fProf, totalWidth, frameMat, glassGroup);
+      fBot.position.set(x, vitY - height / 2 + fProf / 2, zCenter);
+
+      for (let i = 0; i <= 4; i++) {
+        const postZ = zCenter - totalWidth / 2 + i * secW;
+        const post = createBox(fDepth, height - fProf * 2, 0.045, frameMat, glassGroup);
+        post.position.set(x, vitY, postZ);
+      }
+
+      const centers = [-1.5 * secW, -0.5 * secW, 0.5 * secW, 1.5 * secW];
+      centers.forEach((zOffset, idx) => {
+        const glass = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, glassGroup, false, false);
+        glass.position.set(x, vitY, zCenter + zOffset);
+
+        if (idx === 1) {
+          const handle = createBox(0.07, 0.45, 0.03, handleMat, glassGroup);
+          handle.position.set(x + 0.05, vitY - 0.15, zCenter - 0.06);
+        } else if (idx === 2) {
+          const handle = createBox(0.07, 0.45, 0.03, handleMat, glassGroup);
+          handle.position.set(x + 0.05, vitY - 0.15, zCenter + 0.06);
+        }
+      });
+    }
+
+    // Concrete Ceiling Slabs (18.95 × 6.85 м, раскладка плит ПК)
+    function buildCeilingSlabs() {
+      const slabW = 1.18;
+      const slabL = 6.05;
+
+      // 1) Блок 1 (Летняя кухня + санузел/топочная, пролёт 4.00 м в осях 1-2): 3 плиты по 1.20м
+      const summerCenters = [-8.075, -6.875, -5.675];
+      summerCenters.forEach(x => {
+        const slab = createBox(slabW, SLAB_THICK, slabL, slabMat, slabsGroup);
+        slab.position.set(x, WALL_TOP + SLAB_THICK / 2, 0);
+      });
+
+      // 2) Зимняя кухня-студия (пролёт 9.60 м в свету между осями 2 и 3): 8 плит по 1.20м
+      for (let i = 0; i < 8; i++) {
+        const x = -4.00 + i * 1.20;
+        const slab = createBox(slabW, SLAB_THICK, slabL, slabMat, slabsGroup);
+        slab.position.set(x, WALL_TOP + SLAB_THICK / 2, 0);
+      }
+
+      // 3) Беседка / Терраса (пролёт между осями 3 и 4):
+      // Плиты уложены ПЕРПЕНДИКУЛЯРНО остальным плитам (вдоль здания, длина 3.85 м, опирание на балки Осей 3 и 4).
+      // Ровно 4 плиты стандартного габарита 4.0 × 1.2 м (ПК-40-12, факт. ширина 1.18 м) со стороны фасада/двора.
+      // 5-я плита с ЗАДНЕЙ стороны беседки отсутствует — оставлен чистый проём 3.85 × 1.22 м под лестницу на крышу!
+      const gazSlabLengthX = 3.85; // Опирание на поперечные балки Оси 3 (X=5.275) и Оси 4 (X=9.275) по ~12.5 см
+      const gazSlabWidthZ = 1.18;  // Стандартная плита ПК-40-12 (факт 1.18 м, шаг 1.20 м)
+      const gazSlabCenterX = 7.275;
+      // 4 плиты со стороны фасадного двора (Z: от -1.80 до +3.00 м):
+      const gazSlabZPositions = [-1.20, 0.00, 1.20, 2.40];
+      gazSlabZPositions.forEach(z => {
+        const slab = createBox(gazSlabLengthX, SLAB_THICK, gazSlabWidthZ, slabMat, slabsGroup);
+        slab.position.set(gazSlabCenterX, WALL_TOP + SLAB_THICK / 2, z);
+      });
+      // 5-я плита отсутствует сзади (Z от -3.025 до -1.80 м) — открыт проём под лестницу на крышу
+    }
+    buildCeilingSlabs();
+
+    // Parapet Wall (18.95 × 6.85 м, Metric UV)
+    function buildParapet() {
+      const parapetBaseY = WALL_TOP + SLAB_THICK; // 3.42m
+      const pY = parapetBaseY + PARAPET_H / 2;
+      const pThick = 0.38;
+
+      const pFront = createBoxWithMetricUV(18.95, PARAPET_H, pThick, brickMat, parapetGroup);
+      pFront.position.set(0, pY, 3.225);
+
+      // Боковые парапетные стены на полную глубину 6.85 м (Z: от -3.425 до +3.425 м)
+      const pDepth = 6.85;
+      const pLeft = createBoxWithMetricUV(pThick, PARAPET_H, pDepth, brickMat, parapetGroup);
+      pLeft.position.set(-9.285, pY, 0);
+
+      const pRight = createBoxWithMetricUV(pThick, PARAPET_H, pDepth, brickMat, parapetGroup);
+      pRight.position.set(9.285, pY, 0);
+
+      const capH = 0.05;
+      const capY = parapetBaseY + PARAPET_H + capH / 2;
+
+      const capFront = createBox(18.95, capH, pThick + 0.06, parapetCapMat, parapetGroup);
+      capFront.position.set(0, capY, 3.225);
+
+      const capLeft = createBox(pThick + 0.06, capH, pDepth + 0.06, parapetCapMat, parapetGroup);
+      capLeft.position.set(-9.285, capY, 0);
+
+      const capRight = createBox(pThick + 0.06, capH, pDepth + 0.06, parapetCapMat, parapetGroup);
+      capRight.position.set(9.285, capY, 0);
+    }
+    buildParapet();
+
+    // Roof & Rafters above slabs (18.95 × 6.85 м + 1.0м свес назад)
+    function buildPitchedRoof() {
+      const roofL = 18.55;
+      const roofW = 7.45;
+      const centerZ = (2.95 + (-4.425)) / 2;
+
+      const drop = 0.52;
+      const angle = -Math.atan2(drop, roofW);
+
+      const mRear = createBox(18.55, 0.10, 0.15, timberMat, pitchedRoofGroup);
+      mRear.position.set(0, 3.42 + 0.05, -3.225);
+
+      const mFront = createBox(18.55, 0.50, 0.15, timberMat, pitchedRoofGroup);
+      mFront.position.set(0, 3.42 + 0.25, 2.825);
+
+      const rafterH = 0.16;
+      const rafterCenterY = 3.82;
+
+      for (let x = -8.8; x <= 8.8; x += 1.45) {
+        const rafter = createBox(0.08, rafterH, roofW - 0.10, timberMat, pitchedRoofGroup);
+        rafter.rotation.x = angle;
+        rafter.position.set(x, rafterCenterY, centerZ);
+      }
+
+      const roofMesh = new THREE.Mesh(new THREE.BoxGeometry(roofL, 0.06, roofW), roofMat);
+      roofMesh.rotation.x = angle;
+      roofMesh.position.set(0, rafterCenterY + rafterH / 2 + 0.03, centerZ);
+      roofMesh.castShadow = true;
+      roofMesh.receiveShadow = true;
+
+      const edges = new THREE.EdgesGeometry(roofMesh.geometry);
+      roofMesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x94a3b8 })));
+      pitchedRoofGroup.add(roofMesh);
+    }
+    buildPitchedRoof();
+
+    // Dimension Lines (Строго по рабочему чертежу КК-1895-АС-01)
+    const dimLineMaterials = [];
+
+    function buildDimensionLines() {
+      createDimLine([-9.475, 0.2, 4.45], [9.475, 0.2, 4.45], "18.95 м (Общая длина)", 0x38bdf8);
+      createDimLine([-9.475, 0.2, 3.85], [-5.075, 0.2, 3.85], "4.00 м (Летняя кухня)", 0x10b981);
+      createDimLine([-4.675, 0.2, 3.85], [5.075, 0.2, 3.85], "9.75 м (Зимний зал)", 0xf59e0b);
+      createDimLine([5.475, 0.2, 3.85], [9.075, 0.2, 3.85], "3.60 м (Беседка)", 0x38bdf8);
+
+      createDimLine([9.85, 0.2, -3.425], [9.85, 0.2, 3.425], "6.85 м (Общая глубина)", 0x38bdf8);
+      createDimLine([-9.85, 0.2, -3.025], [-9.85, 0.2, -1.125], "1.90 м (Санузел + котельная)", 0xa855f7);
+      createDimLine([-9.85, 0.2, -0.925], [-9.85, 0.2, 3.025], "3.95 м (Летн. кухня)", 0x10b981);
+
+      createDimLine([3.575, 2.9, 3.45], [5.075, 2.9, 3.45], "1.50 м (ОК-4)", 0xf59e0b);
+      createDimLine([2.425, 2.9, 3.45], [3.575, 2.9, 3.45], "1.15 м (Кирпич)", 0x38bdf8);
+      createDimLine([0.925, 2.9, 3.45], [2.425, 2.9, 3.45], "1.50 м (ОК-3)", 0xf59e0b);
+      createDimLine([0.525, 2.9, 3.45], [0.925, 2.9, 3.45], "0.40 м (Колонна)", 0xa855f7);
+      createDimLine([-0.225, 2.9, 3.45], [0.525, 2.9, 3.45], "0.75 м (Кирпич)", 0x38bdf8);
+      createDimLine([-1.725, 2.9, 3.45], [-0.225, 2.9, 3.45], "1.50 м (ОК-2)", 0xf59e0b);
+      createDimLine([-4.675, 2.9, 3.45], [-1.725, 2.9, 3.45], "2.95 м (Глухая стена)", 0x10b981);
+
+      createDimLine([-9.7, 0, -3.6], [-9.7, 3.20, -3.6], "3.20 м (H перекрытия)", 0xe2e8f0);
+      createDimLine([-9.7, 3.20, -3.6], [-9.7, 3.95, -3.6], "0.75 м (Парапет)", 0x38bdf8);
+
+      createDimLine([0, 3.5, -3.425], [0, 3.5, -4.425], "1.00 м (Вылет кровли назад)", 0x10b981);
+      createDimLine([5.275, 3.55, -2.425], [9.275, 3.55, -2.425], "3.85 × 1.22 м (Проём лестницы — сзади)", 0xf59e0b);
+      createDimLine([7.275, 3.55, -1.8], [7.275, 3.55, 3.0], "4.80 м (4 продольные плиты ПК 4×1.2м)", 0x38bdf8);
+    }
+
+    function createDimLine(p1, p2, text, colorHex) {
+      const geom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...p1),
+        new THREE.Vector3(...p2)
+      ]);
+      const mat = new THREE.LineBasicMaterial({
+        color: colorHex,
+        linewidth: 2,
+        transparent: true,
+        opacity: currentDimOpacity
+      });
+      dimLineMaterials.push(mat);
+
+      const line = new THREE.Line(geom, mat);
+      dimensionsGroup.add(line);
+
+      [p1, p2].forEach(p => {
+        const tickGeom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(p[0], p[1] - 0.1, p[2]),
+          new THREE.Vector3(p[0], p[1] + 0.1, p[2])
+        ]);
+        const tick = new THREE.Line(tickGeom, mat);
+        dimensionsGroup.add(tick);
+      });
+
+      const mid = [
+        (p1[0] + p2[0]) / 2,
+        (p1[1] + p2[1]) / 2 + 0.22,
+        (p1[2] + p2[2]) / 2
+      ];
+      add3DLabel(mid, text, colorHex);
+    }
+
+    // 3D Labels
+    const labels = [];
+    const labelsContainer = document.getElementById('labels-container');
+
+    function add3DLabel(pos, text, colorHex) {
+      const el = document.createElement('div');
+      el.className = 'label-3d';
+      el.textContent = text;
+      el.style.borderColor = '#' + colorHex.toString(16).padStart(6, '0');
+      el.style.opacity = currentDimOpacity;
+      labelsContainer.appendChild(el);
+
+      labels.push({
+        element: el,
+        position: new THREE.Vector3(...pos)
+      });
+    }
+
+    // Room center markers
+    function addRoomMarkers() {
+      add3DLabel([7.275, 1.8, 0], "БЕСЕДКА / ТЕРРАСА (3.60 × 6.05 м | 21.8 м²)", 0x38bdf8);
+      add3DLabel([0.20, 1.8, 0], "ЗИМНЯЯ КУХНЯ-СТУДИЯ (9.60 × 6.05 м | 58.1 м²)", 0xf59e0b);
+      add3DLabel([-7.075, 1.8, 1.05], "ЛЕТНЯЯ КУХНЯ (4.00 × 3.95 м | 15.8 м²)", 0x10b981);
+      add3DLabel([-7.075, 1.8, -2.075], "САНУЗЕЛ + КОТЕЛЬНАЯ (4.00 × 1.90 м | 7.6 м²)", 0xa855f7);
+    }
+    addRoomMarkers();
+    buildDimensionLines();
+
+    function updateDimOpacity(val) {
+      currentDimOpacity = val / 100;
+      document.getElementById('opacity-val').textContent = val + '%';
+      dimLineMaterials.forEach(m => m.opacity = currentDimOpacity);
+      labels.forEach(l => l.element.style.opacity = currentDimOpacity);
+    }
+
+    const cameraDir = new THREE.Vector3();
+    const toLabel = new THREE.Vector3();
+
+    function updateLabels() {
+      if (!labelsContainer || labelsContainer.style.display === 'none') return;
+      const tempV = new THREE.Vector3();
+      const halfW = window.innerWidth / 2;
+      const halfH = window.innerHeight / 2;
+      camera.getWorldDirection(cameraDir);
+
+      labels.forEach(lbl => {
+        toLabel.copy(lbl.position).sub(camera.position);
+        if (toLabel.dot(cameraDir) <= 0.1) {
+          lbl.element.style.display = 'none';
+          return;
+        }
+
+        tempV.copy(lbl.position);
+        tempV.project(camera);
+
+        if (tempV.z > 1) {
+          lbl.element.style.display = 'none';
+          return;
+        }
+
+        const x = (tempV.x * halfW) + halfW;
+        const y = -(tempV.y * halfH) + halfH;
+
+        if (x < -100 || x > window.innerWidth + 100 || y < -50 || y > window.innerHeight + 50) {
+          lbl.element.style.display = 'none';
+          return;
+        }
+
+        lbl.element.style.display = 'block';
+        lbl.element.style.left = x + 'px';
+        lbl.element.style.top = y + 'px';
+      });
+    }
+
+    function toggleLayer(layer, visible) {
+      if (layer === 'ground') groundGroup.visible = visible;
+      if (layer === 'plinths') plinthsGroup.visible = visible;
+      if (layer === 'floors') floorsGroup.visible = visible;
+      if (layer === 'roof') pitchedRoofGroup.visible = visible;
+      if (layer === 'parapet') parapetGroup.visible = visible;
+      if (layer === 'slabs') slabsGroup.visible = visible;
+      if (layer === 'walls') wallsGroup.visible = visible;
+      if (layer === 'columns') columnsGroup.visible = visible;
+      if (layer === 'glass') glassGroup.visible = visible;
+      if (layer === 'dimensions') {
+        dimensionsGroup.visible = visible;
+        labelsContainer.style.display = visible ? 'block' : 'none';
+      }
+    }
+
+    function toggleFloorXray(enabled) {
+      floorsGroup.traverse(child => {
+        if (child.isMesh) {
+          if (enabled) {
+            child.material.transparent = true;
+            child.material.opacity = 0.25;
+            child.material.depthWrite = false;
+          } else {
+            child.material.transparent = false;
+            child.material.opacity = 1.0;
+            child.material.depthWrite = true;
+          }
+          child.material.needsUpdate = true;
+        }
+      });
+    }
+
+    function setView(view) {
+      document.querySelectorAll('.btn-view').forEach(b => b.classList.remove('active'));
+      if (event && event.target) event.target.classList.add('active');
+
+      const target = new THREE.Vector3(0, 1.5, 0);
+      let newPos = new THREE.Vector3();
+
+      switch(view) {
+        case 'perspective':
+          newPos.set(22, 15, 26);
+          target.set(0, 1.5, 0);
+          break;
+        case 'front':
+          newPos.set(0, 3.5, 26);
+          target.set(0, 2.0, 0);
+          break;
+        case 'top':
+          newPos.set(0, 34, 0.01);
+          target.set(0, 0, 0);
+          break;
+        case 'gazebo':
+          newPos.set(13, 3.0, 7);
+          target.set(7.275, 1.8, 0);
+          break;
+        case 'summer':
+          newPos.set(-13, 3.0, 7);
+          target.set(-7.075, 1.8, 1.05);
+          break;
+        case 'utility':
+          newPos.set(-7.5, 4.5, -8.5);
+          target.set(-7.075, 1.8, -2.075);
+          break;
+        case 'bottom':
+          newPos.set(0, -22, 10);
+          target.set(0, 0.175, 0); // Центрируем камеру строго на подошве фундамента
+          const chkGround = document.getElementById('toggle-ground');
+          if (chkGround && chkGround.checked) {
+            chkGround.checked = false;
+            toggleLayer('ground', false);
+          }
+          const chkXray = document.getElementById('toggle-xray');
+          if (chkXray && !chkXray.checked) {
+            chkXray.checked = true;
+            toggleFloorXray(true);
+          }
+          break;
+      }
+
+      animateCamera(newPos, target);
+    }
+
+    function resetView() {
+      setView('perspective');
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('view')) {
+      setView(urlParams.get('view'));
+    }
+
+    function animateCamera(newPos, newTarget) {
+      const startPos = camera.position.clone();
+      const startTarget = controls.target.clone();
+      const duration = 800;
+      const startTime = performance.now();
+
+      function anim(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+        camera.position.lerpVectors(startPos, newPos, ease);
+        controls.target.lerpVectors(startTarget, newTarget, ease);
+        controls.update();
+
+        if (t < 1) requestAnimationFrame(anim);
+      }
+      requestAnimationFrame(anim);
+    }
+
+    function takeScreenshot() {
+      renderer.render(scene, camera);
+      const url = renderer.domElement.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.download = 'building-3d-model.png';
+      a.href = url;
+      a.click();
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+      updateLabels();
+    }
+    animate();
+  </script>
+</body>
+</html>
