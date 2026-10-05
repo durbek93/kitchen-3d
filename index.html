@@ -502,7 +502,7 @@
         </div>
 
         <div class="control-row">
-          <span>ЖБ-плиты перекрытия</span>
+          <span>ЖБ-плиты (64-12) и стяжки</span>
           <label class="toggle-switch">
             <input type="checkbox" id="toggle-slabs" onchange="toggleLayer('slabs', this.checked)">
             <span class="slider"></span>
@@ -518,7 +518,7 @@
         </div>
 
         <div class="control-row">
-          <span>Колонны и армопояс</span>
+          <span>Колонны и ригель</span>
           <label class="toggle-switch">
             <input type="checkbox" id="toggle-columns" checked onchange="toggleLayer('columns', this.checked)">
             <span class="slider"></span>
@@ -870,6 +870,18 @@
       linewidth: 1
     });
 
+    // Материал для монолитных участков (заливных стяжек между плитами ПК)
+    const monolithMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8, // гладкий плотный монолитный железобетон
+      roughness: 0.65,
+      metalness: 0.08
+    });
+
+    const monolithEdgeMat = new THREE.LineBasicMaterial({
+      color: 0x334155,
+      linewidth: 1
+    });
+
     let currentDimOpacity = 0.50;
 
     const parapetGroup = new THREE.Group();
@@ -912,6 +924,20 @@
       return mesh;
     }
 
+    function createMonolithBox(w, h, d, group) {
+      const geom = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geom, monolithMat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      
+      const edges = new THREE.EdgesGeometry(geom);
+      const line = new THREE.LineSegments(edges, monolithEdgeMat);
+      mesh.add(line);
+
+      group.add(mesh);
+      return mesh;
+    }
+
     function createBoxWithMetricUV(w, h, d, mat, group, castShadow = true, receiveShadow = true, tileScale = 0.70) {
       const geom = new THREE.BoxGeometry(w, h, d);
       const uv = geom.attributes.uv;
@@ -948,13 +974,14 @@
       return mesh;
     }
 
-    const T = 0.40;
-    const PLINTH_H = 0.35;
-    const WALL_TOP = 3.20;
-    const SLAB_THICK = 0.22;
-    const RING_BEAM_H = 0.57; // from 2.85 to 3.42m
-    const RING_BEAM_BOT = 2.85;
-    const PARAPET_H = 0.75;
+    const T = 0.38; // Кладка в 1.5 кирпича = 38 см
+    const PLINTH_H = 0.50; // Фундамент (цоколь) выступает над землей ровно на 50 см
+    const WALL_TOP = 3.20; // Верх ригелей / опорная плоскость под плиты перекрытия
+    const BEAM_H = 0.40; // Ригели/балки: высота 40 см
+    const BEAM_W = 0.38; // Ригели/балки: ширина 38 см (под 1.5 кирпича)
+    const BEAM_BOT = WALL_TOP - BEAM_H; // 2.80 м (низ ригелей над проемами и кладкой)
+    const SLAB_THICK = 0.22; // Толщина плит ПК (22 см)
+    const PARAPET_H = 0.75; // Парапет 75 см
 
     // Ground plane & grid (в группе groundGroup для скрытия при виде снизу)
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(50, 40), groundMat);
@@ -968,28 +995,28 @@
     groundGroup.add(grid);
 
     // ==========================================
-    // 1. PLINTH & FOUNDATION (18.95 × 6.85 м)
+    // 1. PLINTH & FOUNDATION (18.95 × 6.85 м, H = 50 см)
     // ==========================================
     function buildPlinths() {
-      // Фундаментные ленты и цоколь (plinthsGroup)
+      // Фундаментные ленты и цоколь (plinthsGroup, высота 50 см над землей)
       const pBack = createBox(18.95, PLINTH_H, T, plinthMat, plinthsGroup);
-      pBack.position.set(0, PLINTH_H / 2, -3.225);
+      pBack.position.set(0, PLINTH_H / 2, -3.235);
 
       const pFront = createBox(18.95, PLINTH_H, T, plinthMat, plinthsGroup);
-      pFront.position.set(0, PLINTH_H / 2, 3.225);
+      pFront.position.set(0, PLINTH_H / 2, 3.235);
 
       // Торцевые фундаментные ленты
-      const pLeftEnd = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
-      pLeftEnd.position.set(-9.275, PLINTH_H / 2, 0);
+      const pLeftEnd = createBox(T, PLINTH_H, 6.09, plinthMat, plinthsGroup);
+      pLeftEnd.position.set(-9.285, PLINTH_H / 2, 0);
 
-      const pRightEnd = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
-      pRightEnd.position.set(9.275, PLINTH_H / 2, 0);
+      const pRightEnd = createBox(T, PLINTH_H, 6.09, plinthMat, plinthsGroup);
+      pRightEnd.position.set(9.285, PLINTH_H / 2, 0);
 
       // Поперечные ленты по Осям 2 и 3
-      const pTrans1 = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
+      const pTrans1 = createBox(T, PLINTH_H, 6.09, plinthMat, plinthsGroup);
       pTrans1.position.set(-4.875, PLINTH_H / 2, 0);
 
-      const pTrans2 = createBox(T, PLINTH_H, 6.05, plinthMat, plinthsGroup);
+      const pTrans2 = createBox(T, PLINTH_H, 6.09, plinthMat, plinthsGroup);
       pTrans2.position.set(5.275, PLINTH_H / 2, 0);
 
       // Фундаментная лента под перегородку санузла/котельной (для трассировки труб)
@@ -997,66 +1024,72 @@
       pUtilDiv.position.set(-7.075, PLINTH_H / 2, -1.025);
 
       // Плиты пола помещений (floorsGroup — отключаемые или полупрозрачные в режиме рентгена)
-      // 1) Пол беседки: 3.60 x 6.05 м
-      const fGazebo = createBox(3.60, PLINTH_H, 6.05, concreteMat.clone(), floorsGroup);
+      // 1) Пол беседки: 3.60 x 6.09 м
+      const fGazebo = createBox(3.60, PLINTH_H, 6.09, concreteMat.clone(), floorsGroup);
       fGazebo.position.set(7.275, PLINTH_H / 2, 0);
 
-      // 2) Пол летней кухни: 4.00 x 3.95 м
-      const fSummer = createBox(4.00, PLINTH_H, 3.95, gravelMat.clone(), floorsGroup);
+      // 2) Пол летней кухни: 4.00 x 3.99 м
+      const fSummer = createBox(4.00, PLINTH_H, 3.99, gravelMat.clone(), floorsGroup);
       fSummer.position.set(-7.075, PLINTH_H / 2, 1.05);
 
       // 3) Пол санузла/котельной: 4.00 x 1.90 м
       const fUtil = createBox(4.00, PLINTH_H, 1.90, concreteMat.clone(), floorsGroup);
-      fUtil.position.set(-7.075, PLINTH_H / 2, -2.075);
+      fUtil.position.set(-7.075, PLINTH_H / 2, -2.095);
 
-      // 4) Пол зимней кухни-студии: 9.75 x 6.05 м
-      const fWinter = createBox(9.75, PLINTH_H, 6.05, concreteMat.clone(), floorsGroup);
+      // 4) Пол зимней кухни-студии: 9.77 x 6.09 м
+      const fWinter = createBox(9.77, PLINTH_H, 6.09, concreteMat.clone(), floorsGroup);
       fWinter.position.set(0.20, PLINTH_H / 2, 0);
     }
     buildPlinths();
 
     // ==========================================
-    // 2. MONOLITHIC RING BEAM & FRAME COLUMNS
+    // 2. РИГЕЛИ / БАЛКИ (40 × 38 см) И КОЛОННЫ
     // ==========================================
     function buildBeamsAndColumns() {
-      const ringY = RING_BEAM_BOT + RING_BEAM_H / 2; // 3.135m
+      // Ригели / несущие балки сечением 40 (высота) × 38 см (ширина) под плитами перекрытия
+      const ringY = BEAM_BOT + BEAM_H / 2; // 3.00 м
 
-      const beamBack = createBox(18.95, RING_BEAM_H, T, concreteMat, columnsGroup);
-      beamBack.position.set(0, ringY, -3.225);
+      // Продольные фасадный и задний ригели (18.95 м)
+      const beamBack = createBox(18.95, BEAM_H, BEAM_W, concreteMat, columnsGroup);
+      beamBack.position.set(0, ringY, -3.235);
 
-      const beamFront = createBox(18.95, RING_BEAM_H, T, concreteMat, columnsGroup);
-      beamFront.position.set(0, ringY, 3.225);
+      const beamFront = createBox(18.95, BEAM_H, BEAM_W, concreteMat, columnsGroup);
+      beamFront.position.set(0, ringY, 3.235);
 
-      const beamLeftEnd = createBox(T, RING_BEAM_H, 6.05, concreteMat, columnsGroup);
-      beamLeftEnd.position.set(-9.275, ringY, 0);
+      // Торцевые ригели (Оси 1 и 5)
+      const beamLeftEnd = createBox(BEAM_W, BEAM_H, 6.09, concreteMat, columnsGroup);
+      beamLeftEnd.position.set(-9.285, ringY, 0);
 
-      const beamRightEnd = createBox(T, RING_BEAM_H, 6.05, concreteMat, columnsGroup);
-      beamRightEnd.position.set(9.275, ringY, 0);
+      const beamRightEnd = createBox(BEAM_W, BEAM_H, 6.09, concreteMat, columnsGroup);
+      beamRightEnd.position.set(9.285, ringY, 0);
 
-      const intBeamY = 2.85 + 0.35 / 2;
-      const beamMid1 = createBox(T, 0.35, 6.05, concreteMat, columnsGroup);
-      beamMid1.position.set(-4.875, intBeamY, 0);
+      // Поперечный ригель Оси 4 над капитальной стеной с дверью 0.8х2.1м (высота 40 см)
+      const beamMid1 = createBox(BEAM_W, BEAM_H, 6.09, concreteMat, columnsGroup);
+      beamMid1.position.set(-4.875, ringY, 0);
 
-      const beamMid2 = createBox(T, 0.35, 6.05, concreteMat, columnsGroup);
-      beamMid2.position.set(5.275, intBeamY, 0);
+      // Поперечный ригель Оси 3 над порталом беседки
+      const beamMid2 = createBox(BEAM_W, BEAM_H, 6.09, concreteMat, columnsGroup);
+      beamMid2.position.set(5.275, ringY, 0);
 
-      const uBeam = createBox(4.00, 0.35, 0.20, concreteMat, columnsGroup);
-      uBeam.position.set(-7.075, intBeamY, -1.025);
+      // Ригель над перегородкой санузла/котельной
+      const uBeam = createBox(4.00, BEAM_H, 0.20, concreteMat, columnsGroup);
+      uBeam.position.set(-7.075, ringY, -1.025);
 
-      const colHeight = 2.85 - PLINTH_H; // 2.50m
-      const colY = PLINTH_H + colHeight / 2;
+      // Колонны монолитные (от верха цоколя Y = 0.50 до низа ригелей Y = 2.80 м)
+      const colHeight = BEAM_BOT - PLINTH_H; // 2.30 м
+      const colY = PLINTH_H + colHeight / 2; // 1.65 м
 
-      // 10 structural monolithic columns 400x400 mm
+      // 10 несущих железобетонных колонн 380x380 мм (под 1.5 кирпича)
       const colPositions = [
-        [-9.275, 3.225], [-9.275, -3.225],  // Axis 1
-        [-4.875, 3.225], [-4.875, -3.225],  // Axis 2
-        [0.725, 3.225],  [0.725, -3.225],   // Intermediate column between windows
-        [5.275, 3.225],  [5.275, -3.225],   // Axis 3
-        [9.275, 3.225],  [9.275, -3.225]    // Axis 4
+        [-9.285, 3.235], [-9.285, -3.235],  // Ось 5
+        [-4.875, 3.235], [-4.875, -3.235],  // Ось 4 (разделение кухонь)
+        [0.725, 3.235],  [0.725, -3.235],   // Промежуточная колонна зимней кухни
+        [5.275, 3.235],  [5.275, -3.235],   // Ось 3 (портал беседки)
+        [9.285, 3.235],  [9.285, -3.235]    // Ось 2 (торец беседки)
       ];
 
       colPositions.forEach(([x, z]) => {
-        const col = createBox(T, colHeight, T, concreteMat, columnsGroup);
+        const col = createBox(BEAM_W, colHeight, BEAM_W, concreteMat, columnsGroup);
         col.position.set(x, colY, z);
       });
     }
@@ -1066,135 +1099,129 @@
     // 3. WALLS & DOORWAYS (СТРОГО ПО ЧЕРТЕЖУ КК-1895-АС-01)
     // ==========================================
     function buildWalls() {
-      const wallH = 2.50; // clear height under beams
-      const wallY = PLINTH_H + wallH / 2;
+      const wallH = BEAM_BOT - PLINTH_H; // 2.30 м (чистая высота кладки от цоколя до низа ригелей)
+      const wallY = PLINTH_H + wallH / 2; // 1.65 м
 
       // --- ЛЕТНЯЯ КУХНЯ И САНУЗЕЛ/ТОПОЧНАЯ (БЛОК 1: X в [-9.075, -5.075]) ---
       // Форточка санузла/котельной (0.80 x 0.50 м, ось Z = -2.075)
-      const sEndBot = createBoxWithMetricUV(0.38, 1.60, 1.90, brickMat, wallsGroup);
-      sEndBot.position.set(-9.275, PLINTH_H + 1.60 / 2, -2.075);
+      const sEndBot = createBoxWithMetricUV(0.38, 1.50, 1.90, brickMat, wallsGroup);
+      sEndBot.position.set(-9.285, PLINTH_H + 1.50 / 2, -2.075);
 
       const fSide1 = createBoxWithMetricUV(0.38, 0.50, 0.55, brickMat, wallsGroup);
-      fSide1.position.set(-9.275, PLINTH_H + 1.60 + 0.25, -2.75);
+      fSide1.position.set(-9.285, PLINTH_H + 1.50 + 0.25, -2.75);
 
       const fSide2 = createBoxWithMetricUV(0.38, 0.50, 0.55, brickMat, wallsGroup);
-      fSide2.position.set(-9.275, PLINTH_H + 1.60 + 0.25, -1.40);
+      fSide2.position.set(-9.285, PLINTH_H + 1.50 + 0.25, -1.40);
 
-      const fTopH = wallH - (1.60 + 0.50); // 0.40m
+      const fTopH = wallH - (1.50 + 0.50); // 0.30 м
       const sEndTop = createBoxWithMetricUV(0.38, fTopH, 1.90, brickMat, wallsGroup);
-      sEndTop.position.set(-9.275, PLINTH_H + 2.10 + fTopH / 2, -2.075);
+      sEndTop.position.set(-9.285, PLINTH_H + 2.00 + fTopH / 2, -2.075);
 
-      buildTransomWindow(-9.275, -2.075, 0.80, 0.50);
+      buildTransomWindow(-9.285, -2.075, 0.80, 0.50);
 
       // Глухая стена летней кухни вдоль торца (Z: -1.125 до +3.025 = 4.15м)
       const sEndMain = createBoxWithMetricUV(0.38, wallH, 4.15, brickMat, wallsGroup);
-      sEndMain.position.set(-9.275, wallY, 0.95);
+      sEndMain.position.set(-9.285, wallY, 0.95);
 
       // Задняя стена санузла/котельной (X: -9.075 до -5.075 = 4.00м)
       const sRearWall = createBoxWithMetricUV(4.00, wallH, 0.38, brickMat, wallsGroup);
-      sRearWall.position.set(-7.075, wallY, -3.225);
+      sRearWall.position.set(-7.075, wallY, -3.235);
 
       // Перегородка между летней кухней и санузлом (Z = -1.025, длина 4.00м, толщина 0.20м)
       const utilDivider = createBoxWithMetricUV(4.00, wallH, 0.20, brickMat, wallsGroup);
       utilDivider.position.set(-7.075, wallY, -1.025);
 
-      // --- РАЗДЕЛИТЕЛЬНАЯ СТЕНА ПО ОСИ 2 (X = -4.875) ---
+      // --- РАЗДЕЛИТЕЛЬНАЯ СТЕНА ПО ОСИ 4 (X = -4.875) ---
       const doorH = 2.10;
       const doorW = 0.80;
-      const lintelH = wallH - doorH; // 0.40m
+      const lintelH = wallH - doorH; // 0.20 м (20 см кирпичная перемычка, выше которой ригель 40 см)
 
       // 1. Кирпичный простенок слева от двери (Z: -3.025 до -2.475 = 0.55м)
-      const wSepLeft = createBoxWithMetricUV(0.40, wallH, 0.55, brickMat, wallsGroup);
+      const wSepLeft = createBoxWithMetricUV(0.38, wallH, 0.55, brickMat, wallsGroup);
       wSepLeft.position.set(-4.875, wallY, -2.75);
 
-      // 2. Кирпичная перемычка над дверью Д-1 (по центру с/у: Z: -2.475 до -1.675, центр Z = -2.075)
-      const wDoorLintel = createBoxWithMetricUV(0.40, lintelH, doorW, brickMat, wallsGroup);
+      // 2. Кирпичная перемычка над дверью Д-1 (по центру с/у: Z = -2.075)
+      const wDoorLintel = createBoxWithMetricUV(0.38, lintelH, doorW, brickMat, wallsGroup);
       wDoorLintel.position.set(-4.875, PLINTH_H + doorH + lintelH / 2, -2.075);
 
       // 3. Основная стена справа от двери до фасада (Z: -1.675 до +3.025 = 4.70м)
-      const wSepMid = createBoxWithMetricUV(0.40, wallH, 4.70, brickMat, wallsGroup);
+      const wSepMid = createBoxWithMetricUV(0.38, wallH, 4.70, brickMat, wallsGroup);
       wSepMid.position.set(-4.875, wallY, 0.675);
 
-      // Дверной блок Д-1 (0.80 × 2.10 м, центр Z = -2.075 - строго по центру стены с/у и соосно форточке!)
+      // Дверной блок Д-1 (0.80 × 2.10 м, центр Z = -2.075)
       buildDoorway(-4.875, -2.075, doorW, doorH, true);
 
-      // --- ФАСАД ЗИМНЕЙ КУХНИ (ПО ЧЕРТЕЖУ КК-1895-АС-01 1:1, Z = 3.225) ---
-      const winW = 1.50; // Витражные окна 1.50 × 2.45 м (ОК-2, ОК-3, ОК-4)
-      const sillH = 0.38; // 5 рядов кирпича под окнами (~38 см)
-      const openH = wallH - sillH; // 2.12м в свету
+      // --- ФАСАД ЗИМНЕЙ КУХНИ (Z = 3.235) ---
+      const winW = 1.50; // Витражные окна 1.50 м
+      const sillH = 0.38; // подоконная кладка ~38 см
+      const openH = wallH - sillH; // 1.92 м в свету до ригеля
 
       // 1. Глухая стена 2.95 м (X: -4.675 до -1.725)
-      const pierBlind = createBoxWithMetricUV(2.96, wallH, 0.40, brickMat, wallsGroup);
-      pierBlind.position.set(-3.20, wallY, 3.225);
+      const pierBlind = createBoxWithMetricUV(2.96, wallH, 0.38, brickMat, wallsGroup);
+      pierBlind.position.set(-3.20, wallY, 3.235);
 
-      // 2. Окно ОК-2 (1.50 × 2.45 м, центр X = -0.975)
-      const sill2 = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
-      sill2.position.set(-0.975, PLINTH_H + sillH / 2, 3.225);
-      buildWindow(-0.975, 3.225, winW, openH, sillH);
+      // 2. Окно ОК-2 (1.50 м, центр X = -0.975)
+      const sill2 = createBoxWithMetricUV(winW, sillH, 0.38, brickMat, wallsGroup);
+      sill2.position.set(-0.975, PLINTH_H + sillH / 2, 3.235);
+      buildWindow(-0.975, 3.235, winW, openH, sillH);
 
-      // 3. Модульный простенок 1.15 м между ОК-2 и ОК-3:
-      // - 75 см жжёный кирпич (X: -0.225 до +0.525, ширина 0.76м с микрозаходом в колонну - зазор устранён!)
-      const pier2Brick = createBoxWithMetricUV(0.76, wallH, 0.40, brickMat, wallsGroup);
-      pier2Brick.position.set(0.155, wallY, 3.225);
-      // (40 см ж/б колонна на X = +0.725 уже возведена в buildBeamsAndColumns)
+      // 3. Модульный простенок между ОК-2 и ОК-3 (кирпич 0.76м до колонны X = 0.725)
+      const pier2Brick = createBoxWithMetricUV(0.76, wallH, 0.38, brickMat, wallsGroup);
+      pier2Brick.position.set(0.155, wallY, 3.235);
 
-      // 4. Окно ОК-3 (1.50 × 2.45 м, центр X = +1.675)
-      const sill3 = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
-      sill3.position.set(1.675, PLINTH_H + sillH / 2, 3.225);
-      buildWindow(1.675, 3.225, winW, openH, sillH);
+      // 4. Окно ОК-3 (1.50 м, центр X = +1.675)
+      const sill3 = createBoxWithMetricUV(winW, sillH, 0.38, brickMat, wallsGroup);
+      sill3.position.set(1.675, PLINTH_H + sillH / 2, 3.235);
+      buildWindow(1.675, 3.235, winW, openH, sillH);
 
-      // 5. Модульный простенок 1.15 м между ОК-3 и ОК-4 (жжёный кирпич: X: +2.425 до +3.575)
-      const pier3Brick = createBoxWithMetricUV(1.16, wallH, 0.40, brickMat, wallsGroup);
-      pier3Brick.position.set(3.00, wallY, 3.225);
+      // 5. Простенок между ОК-3 и ОК-4 (жжёный кирпич: X: +2.425 до +3.575)
+      const pier3Brick = createBoxWithMetricUV(1.16, wallH, 0.38, brickMat, wallsGroup);
+      pier3Brick.position.set(3.00, wallY, 3.235);
 
-      // 6. Окно ОК-4 (1.50 × 2.45 м, центр X = +4.325, вплотную к колонне Оси 3)
-      const sill4 = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
-      sill4.position.set(4.325, PLINTH_H + sillH / 2, 3.225);
-      buildWindow(4.325, 3.225, winW, openH, sillH);
+      // 6. Окно ОК-4 (1.50 м, центр X = +4.325, вплотную к колонне Оси 3)
+      const sill4 = createBoxWithMetricUV(winW, sillH, 0.38, brickMat, wallsGroup);
+      sill4.position.set(4.325, PLINTH_H + sillH / 2, 3.235);
+      buildWindow(4.325, 3.235, winW, openH, sillH);
 
-      // --- ЗАДНЯЯ СТЕНА ЗИМНЕЙ КУХНИ (СТРОГО СООСНО ФАСАДУ 1:1, Z = -3.225) ---
-      // 1. Глухой участок слева от ОК-1 (2.95 м, X: -4.675 до -1.725)
-      const rWall1 = createBoxWithMetricUV(2.96, wallH, 0.40, brickMat, wallsGroup);
-      rWall1.position.set(-3.20, wallY, -3.225);
+      // --- ЗАДНЯЯ СТЕНА ЗИМНЕЙ КУХНИ (Z = -3.235) ---
+      // 1. Глухой участок слева от ОК-1 (2.95 м)
+      const rWall1 = createBoxWithMetricUV(2.96, wallH, 0.38, brickMat, wallsGroup);
+      rWall1.position.set(-3.20, wallY, -3.235);
 
-      // 2. Окно ОК-1 (1.50 × 2.45 м, центр X = -0.975 - СТРОГО СООСНО ОКНУ ОК-2 НАПРОТИВ!)
-      const rSill = createBoxWithMetricUV(winW, sillH, 0.40, brickMat, wallsGroup);
-      rSill.position.set(-0.975, PLINTH_H + sillH / 2, -3.225);
-      buildWindow(-0.975, -3.225, winW, openH, sillH);
+      // 2. Окно ОК-1 (1.50 м, центр X = -0.975 - строго соосно окну ОК-2 напротив)
+      const rSill = createBoxWithMetricUV(winW, sillH, 0.38, brickMat, wallsGroup);
+      rSill.position.set(-0.975, PLINTH_H + sillH / 2, -3.235);
+      buildWindow(-0.975, -3.235, winW, openH, sillH);
 
-      // 3. Кирпичный простенок 0.75 м между ОК-1 и промежуточной колонной (X: -0.225 до +0.525)
-      // (Восстановлена кладка 0.75м по скриншоту 2, плотная стыковка без зазоров)
-      const rPierBrick = createBoxWithMetricUV(0.76, wallH, 0.40, brickMat, wallsGroup);
-      rPierBrick.position.set(0.155, wallY, -3.225);
+      // 3. Кирпичный простенок 0.75 м между ОК-1 и промежуточной колонной
+      const rPierBrick = createBoxWithMetricUV(0.76, wallH, 0.38, brickMat, wallsGroup);
+      rPierBrick.position.set(0.155, wallY, -3.235);
 
-      // 4. Глухой участок справа от промежуточной колонны (X: +0.925 до +5.075 = 4.15м)
-      const rWall2 = createBoxWithMetricUV(4.16, wallH, 0.40, brickMat, wallsGroup);
-      rWall2.position.set(3.00, wallY, -3.225);
+      // 4. Глухой участок справа от промежуточной колонны (4.15 м)
+      const rWall2 = createBoxWithMetricUV(4.16, wallH, 0.38, brickMat, wallsGroup);
+      rWall2.position.set(3.00, wallY, -3.235);
 
       // --- РАЗДЕЛИТЕЛЬНАЯ СТЕНА ПО ОСИ 3 И ВИТРАЖ ВП-1 (X = +5.275) ---
-      // Портал ВП-1 (пролёт 4.05 м, центр Z = 0.0)
-      const portalPierBack = createBoxWithMetricUV(0.40, wallH, 1.00, brickMat, wallsGroup);
+      const portalPierBack = createBoxWithMetricUV(0.38, wallH, 1.00, brickMat, wallsGroup);
       portalPierBack.position.set(5.275, wallY, -2.525);
 
-      const portalPierFront = createBoxWithMetricUV(0.40, wallH, 1.00, brickMat, wallsGroup);
+      const portalPierFront = createBoxWithMetricUV(0.38, wallH, 1.00, brickMat, wallsGroup);
       portalPierFront.position.set(5.275, wallY, 2.525);
 
       build4SectionVitraj(5.275, 0, 4.05, wallH);
 
-      // --- КЛАДКА БЕСЕДКИ (ПО КЛАДОЧНОМУ ПЛАНУ КК-1895-АС-01 И ФОТО) ---
-      // 1. Продольные кирпичные простенки у Оси 4 (X: +8.265 до +9.085, длина 0.82 м, толщина 0.40 м)
-      const gazPierAx4Back = createBoxWithMetricUV(0.82, wallH, 0.40, brickMat, wallsGroup);
-      gazPierAx4Back.position.set(8.675, wallY, -3.225);
+      // --- КЛАДКА БЕСЕДКИ ---
+      const gazPierAx4Back = createBoxWithMetricUV(0.82, wallH, 0.38, brickMat, wallsGroup);
+      gazPierAx4Back.position.set(8.675, wallY, -3.235);
 
-      const gazPierAx4Front = createBoxWithMetricUV(0.82, wallH, 0.40, brickMat, wallsGroup);
-      gazPierAx4Front.position.set(8.675, wallY, 3.225);
+      const gazPierAx4Front = createBoxWithMetricUV(0.82, wallH, 0.38, brickMat, wallsGroup);
+      gazPierAx4Front.position.set(8.675, wallY, 3.235);
 
-      // 2. Торцевые пилоны беседки по Оси 4 (X = +9.275, Z: ±2.62, длина 0.82 м, толщина 0.40 м - плотно к угловым колоннам без зазоров)
-      const gazPier1 = createBoxWithMetricUV(0.40, wallH, 0.82, brickMat, wallsGroup);
-      gazPier1.position.set(9.275, wallY, -2.62);
+      const gazPier1 = createBoxWithMetricUV(0.38, wallH, 0.82, brickMat, wallsGroup);
+      gazPier1.position.set(9.285, wallY, -2.62);
 
-      const gazPier2 = createBoxWithMetricUV(0.40, wallH, 0.82, brickMat, wallsGroup);
-      gazPier2.position.set(9.275, wallY, 2.62);
+      const gazPier2 = createBoxWithMetricUV(0.38, wallH, 0.82, brickMat, wallsGroup);
+      gazPier2.position.set(9.285, wallY, 2.62);
     }
     buildWalls();
 
@@ -1306,39 +1333,104 @@
       });
     }
 
-    // Concrete Ceiling Slabs (18.95 × 6.85 м, раскладка плит ПК)
+    // Concrete Ceiling Slabs (18.95 × 6.85 м: 10 плит 64-12 + 5 монолитных стяжек + 4 плиты 40-12)
     function buildCeilingSlabs() {
-      const slabW = 1.18;
-      const slabL = 6.05;
+      const slabW12 = 1.18; // номинал 1.20 м (факт 1.18 м с рустом)
+      const slabL64 = 6.40; // длина плит ПК 64-12 (опирание на фасадный и задний ригели по 15.5 см)
+      const slabY = WALL_TOP + SLAB_THICK / 2; // 3.31 м
 
-      // 1) Блок 1 (Летняя кухня + санузел/топочная, пролёт 4.00 м в осях 1-2): 3 плиты по 1.20м
-      const summerCenters = [-8.075, -6.875, -5.675];
-      summerCenters.forEach(x => {
-        const slab = createBox(slabW, SLAB_THICK, slabL, slabMat, slabsGroup);
-        slab.position.set(x, WALL_TOP + SLAB_THICK / 2, 0);
-      });
-
-      // 2) Зимняя кухня-студия (пролёт 9.60 м в свету между осями 2 и 3): 8 плит по 1.20м
-      for (let i = 0; i < 8; i++) {
-        const x = -4.00 + i * 1.20;
-        const slab = createBox(slabW, SLAB_THICK, slabL, slabMat, slabsGroup);
-        slab.position.set(x, WALL_TOP + SLAB_THICK / 2, 0);
-      }
-
-      // 3) Беседка / Терраса (пролёт между осями 3 и 4):
-      // Плиты уложены ПЕРПЕНДИКУЛЯРНО остальным плитам (вдоль здания, длина 3.85 м, опирание на балки Осей 3 и 4).
-      // Ровно 4 плиты стандартного габарита 4.0 × 1.2 м (ПК-40-12, факт. ширина 1.18 м) со стороны фасада/двора.
-      // 5-я плита с ЗАДНЕЙ стороны беседки отсутствует — оставлен чистый проём 3.85 × 1.22 м под лестницу на крышу!
-      const gazSlabLengthX = 3.85; // Опирание на поперечные балки Оси 3 (X=5.275) и Оси 4 (X=9.275) по ~12.5 см
-      const gazSlabWidthZ = 1.18;  // Стандартная плита ПК-40-12 (факт 1.18 м, шаг 1.20 м)
+      // -------------------------------------------------------------
+      // 1) БЕСЕДКА (Ось 3 - Ось 2, справа со двора):
+      // 4 плиты 40-12 (длина 3.85 м вдоль здания, опирание на поперечные ригели).
+      // 5-й слот со стороны заднего двора свободен — открыт проём 3.85 × 1.22 м под лестницу на крышу!
+      // -------------------------------------------------------------
+      const gazSlabLengthX = 3.85;
+      const gazSlabWidthZ = 1.18;
       const gazSlabCenterX = 7.275;
-      // 4 плиты со стороны фасадного двора (Z: от -1.80 до +3.00 м):
       const gazSlabZPositions = [-1.20, 0.00, 1.20, 2.40];
       gazSlabZPositions.forEach(z => {
         const slab = createBox(gazSlabLengthX, SLAB_THICK, gazSlabWidthZ, slabMat, slabsGroup);
-        slab.position.set(gazSlabCenterX, WALL_TOP + SLAB_THICK / 2, z);
+        slab.position.set(gazSlabCenterX, slabY, z);
       });
-      // 5-я плита отсутствует сзади (Z от -3.025 до -1.80 м) — открыт проём под лестницу на крышу
+
+      // -------------------------------------------------------------
+      // 2) ЗИМНЯЯ КУХНЯ (Справа налево: от портала беседки к перегородке с/у):
+      // Семь плит марки 64-12 + 4 монолитных участка (стяжки)
+      // -------------------------------------------------------------
+      // Плита №1 (64-12) — примыкает к пилону витража беседки
+      const s1 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s1.position.set(4.475, slabY, 0);
+
+      // Монолитный участок №1 (стяжка 28 см)
+      const m1 = createMonolithBox(0.28, SLAB_THICK, slabL64, slabsGroup);
+      m1.position.set(3.735, slabY, 0);
+
+      // Плита №2 (64-12)
+      const s2 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s2.position.set(2.995, slabY, 0);
+
+      // Монолитный участок №2 (стяжка 28 см)
+      const m2 = createMonolithBox(0.28, SLAB_THICK, slabL64, slabsGroup);
+      m2.position.set(2.255, slabY, 0);
+
+      // Плита №3 (64-12) — опирается на выпуски арматуры фасадной колонны
+      const s3 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s3.position.set(1.515, slabY, 0);
+
+      // Монолитный участок №3 (стяжка 42 см над колонной X = 0.725)
+      const m3 = createMonolithBox(0.42, SLAB_THICK, slabL64, slabsGroup);
+      m3.position.set(0.705, slabY, 0);
+
+      // Плиты №4, №5, №6 (64-12) — 3 плиты подряд без зазоров (сплошной настил 3.60 м)
+      const s4 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s4.position.set(-0.105, slabY, 0);
+
+      const s5 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s5.position.set(-1.305, slabY, 0);
+
+      const s6 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s6.position.set(-2.505, slabY, 0);
+
+      // Монолитный участок №4 (стяжка 45 см у второй колонны)
+      const m4 = createMonolithBox(0.45, SLAB_THICK, slabL64, slabsGroup);
+      m4.position.set(-3.330, slabY, 0);
+
+      // Плита №7 (64-12) — крайняя плита зимней кухни перед капитальной стеной 38 см
+      const s7 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s7.position.set(-4.155, slabY, 0);
+
+      // -------------------------------------------------------------
+      // 3) ЛЕТНЯЯ КУХНЯ + САНУЗЕЛ/КОТЕЛЬНАЯ (Справа налево: от стены с/у к торцу):
+      // Три плиты марки 64-12 + монолитный участок №5 + торцевой добор
+      // -------------------------------------------------------------
+      // Плита №8 (64-12)
+      const s8 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s8.position.set(-5.680, slabY, 0);
+
+      // Плита №9 (64-12) — идёт подряд за плитой №8
+      const s9 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s9.position.set(-6.880, slabY, 0);
+
+      // Монолитный участок №5 (стяжка 44 см)
+      const m5 = createMonolithBox(0.44, SLAB_THICK, slabL64, slabsGroup);
+      m5.position.set(-7.700, slabY, 0);
+
+      // Плита №10 (64-12)
+      const s10 = createBox(slabW12, SLAB_THICK, slabL64, slabMat, slabsGroup);
+      s10.position.set(-8.520, slabY, 0);
+
+      // Заливка ригеля/монолита до уровня плит у торцевой стены (Ось 5)
+      const mEnd = createMonolithBox(0.38, SLAB_THICK, slabL64, slabsGroup);
+      mEnd.position.set(-9.285, slabY, 0);
+
+      // -------------------------------------------------------------
+      // 4) АРМОПОЯС НА УРОВНЕ ПЛИТ (H = 22 см, закрывает торцы плит снаружи)
+      // -------------------------------------------------------------
+      const pBeltF = createMonolithBox(18.95, SLAB_THICK, 0.225, slabsGroup);
+      pBeltF.position.set(0, slabY, 3.3125);
+
+      const pBeltB = createMonolithBox(18.95, SLAB_THICK, 0.225, slabsGroup);
+      pBeltB.position.set(0, slabY, -3.3125);
     }
     buildCeilingSlabs();
 
@@ -1430,12 +1522,16 @@
       createDimLine([-1.725, 2.9, 3.45], [-0.225, 2.9, 3.45], "1.50 м (ОК-2)", 0xf59e0b);
       createDimLine([-4.675, 2.9, 3.45], [-1.725, 2.9, 3.45], "2.95 м (Глухая стена)", 0x10b981);
 
-      createDimLine([-9.7, 0, -3.6], [-9.7, 3.20, -3.6], "3.20 м (H перекрытия)", 0xe2e8f0);
-      createDimLine([-9.7, 3.20, -3.6], [-9.7, 3.95, -3.6], "0.75 м (Парапет)", 0x38bdf8);
+      createDimLine([-9.7, 0, -3.6], [-9.7, 0.50, -3.6], "0.50 м (Цоколь)", 0x38bdf8);
+      createDimLine([-9.7, 0.50, -3.6], [-9.7, 2.80, -3.6], "2.30 м (Кладка стен)", 0xe2e8f0);
+      createDimLine([-9.7, 2.80, -3.6], [-9.7, 3.20, -3.6], "0.40 м (Ригели 40×38 см)", 0xa855f7);
+      createDimLine([-9.7, 3.20, -3.6], [-9.7, 3.42, -3.6], "0.22 м (Плиты ПК)", 0x10b981);
+      createDimLine([-9.7, 3.42, -3.6], [-9.7, 4.17, -3.6], "0.75 м (Парапет)", 0x38bdf8);
 
       createDimLine([0, 3.5, -3.425], [0, 3.5, -4.425], "1.00 м (Вылет кровли назад)", 0x10b981);
-      createDimLine([5.275, 3.55, -2.425], [9.275, 3.55, -2.425], "3.85 × 1.22 м (Проём лестницы — сзади)", 0xf59e0b);
-      createDimLine([7.275, 3.55, -1.8], [7.275, 3.55, 3.0], "4.80 м (4 продольные плиты ПК 4×1.2м)", 0x38bdf8);
+      createDimLine([5.275, 3.55, -2.425], [9.275, 3.55, -2.425], "3.85 × 1.22 м (Проём лестницы)", 0xf59e0b);
+      createDimLine([7.275, 3.55, -1.8], [7.275, 3.55, 3.0], "4 плиты 40-12 (Беседка)", 0x38bdf8);
+      createDimLine([-9.10, 3.55, 0], [4.80, 3.55, 0], "10 плит 64-12 + 5 монолитных стяжек", 0x38bdf8);
     }
 
     function createDimLine(p1, p2, text, colorHex) {
