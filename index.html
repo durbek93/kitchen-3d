@@ -398,6 +398,31 @@
       color: #0f172a;
       border-color: var(--primary);
     }
+
+    .btn-seg {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 4px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .btn-seg:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-seg.active {
+      color: #0f172a;
+      background: var(--primary);
+      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+    }
   </style>
 </head>
 <body>
@@ -448,20 +473,16 @@
           </label>
         </div>
 
-        <div class="control-row">
-          <span>Полы (плиты / стяжка)</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggle-floors" checked onchange="toggleLayer('floors', this.checked)">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="control-row" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35);">
-          <span style="color: #38bdf8; font-weight: 600;">🔍 Рентген полов (для труб)</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggle-xray" onchange="toggleFloorXray(this.checked)">
-            <span class="slider"></span>
-          </label>
+        <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; width: 100%;">
+            <span>Полы (плиты / стяжка)</span>
+            <span id="floor-mode-label" style="font-weight: 700; color: var(--primary);">Сплошной</span>
+          </div>
+          <div class="segmented-control" style="display: flex; width: 100%; gap: 4px; background: rgba(15, 23, 42, 0.6); padding: 3px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <button type="button" class="btn-seg active" id="btn-floor-solid" onclick="setFloorMode('solid')">Сплошной</button>
+            <button type="button" class="btn-seg" id="btn-floor-xray" onclick="setFloorMode('xray')">🔍 Рентген</button>
+            <button type="button" class="btn-seg" id="btn-floor-hidden" onclick="setFloorMode('hidden')">Скрыть</button>
+          </div>
         </div>
 
         <div class="control-row">
@@ -1538,21 +1559,65 @@
       }
     }
 
-    function toggleFloorXray(enabled) {
-      floorsGroup.traverse(child => {
-        if (child.isMesh) {
-          if (enabled) {
-            child.material.transparent = true;
-            child.material.opacity = 0.25;
-            child.material.depthWrite = false;
-          } else {
-            child.material.transparent = false;
-            child.material.opacity = 1.0;
-            child.material.depthWrite = true;
+    let currentFloorMode = 'solid';
+
+    function setFloorMode(mode) {
+      currentFloorMode = mode;
+      
+      const btnSolid = document.getElementById('btn-floor-solid');
+      const btnXray = document.getElementById('btn-floor-xray');
+      const btnHidden = document.getElementById('btn-floor-hidden');
+      const lblMode = document.getElementById('floor-mode-label');
+
+      if (btnSolid) btnSolid.classList.toggle('active', mode === 'solid');
+      if (btnXray) btnXray.classList.toggle('active', mode === 'xray');
+      if (btnHidden) btnHidden.classList.toggle('active', mode === 'hidden');
+
+      if (lblMode) {
+        if (mode === 'solid') lblMode.textContent = 'Сплошной';
+        if (mode === 'xray') lblMode.textContent = '🔍 Рентген';
+        if (mode === 'hidden') lblMode.textContent = 'Скрыт';
+      }
+
+      if (mode === 'hidden') {
+        floorsGroup.visible = false;
+      } else {
+        floorsGroup.visible = true;
+        floorsGroup.traverse(child => {
+          if (child.isMesh) {
+            if (mode === 'xray') {
+              // Яркий архитектурный голографический рентген: полупрозрачная бирюзовая плоскость + светящийся контур
+              child.material.transparent = true;
+              child.material.opacity = 0.35;
+              child.material.color.setHex(0x38bdf8);
+              child.material.depthWrite = false;
+              child.material.roughness = 0.15;
+              child.material.metalness = 0.5;
+
+              child.children.forEach(sub => {
+                if (sub.isLineSegments) {
+                  sub.material.color.setHex(0x0284c7);
+                }
+              });
+            } else {
+              // Сплошной монолитный пол (единый бетон)
+              child.material.transparent = false;
+              child.material.opacity = 1.0;
+              child.material.color.setHex(0xc4c7cc);
+              child.material.depthWrite = true;
+              child.material.roughness = 0.9;
+              child.material.metalness = 0.05;
+
+              child.children.forEach(sub => {
+                if (sub.isLineSegments) {
+                  sub.material.color.setHex(0x475569);
+                }
+              });
+            }
+            child.material.needsUpdate = true;
           }
-          child.material.needsUpdate = true;
-        }
-      });
+        });
+      }
     }
 
     function setView(view) {
@@ -1595,11 +1660,7 @@
             chkGround.checked = false;
             toggleLayer('ground', false);
           }
-          const chkXray = document.getElementById('toggle-xray');
-          if (chkXray && !chkXray.checked) {
-            chkXray.checked = true;
-            toggleFloorXray(true);
-          }
+          setFloorMode('xray');
           break;
       }
 
