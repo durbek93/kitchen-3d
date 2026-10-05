@@ -1431,6 +1431,21 @@
 
       const pBeltB = createMonolithBox(18.95, SLAB_THICK, 0.225, slabsGroup);
       pBeltB.position.set(0, slabY, -3.3125);
+
+      // -------------------------------------------------------------
+      // 5) ПОПЕРЕЧНЫЕ МОНОЛИТНЫЕ ЗАЛИВКИ (H = 22 см, строго в уровень с плитами перекрытия)
+      // -------------------------------------------------------------
+      // Зона 1: Монолитный пояс между зимней и летней кухней (над стеной и ригелем Оси 4)
+      const mBeltDiv = createMonolithBox(0.38, SLAB_THICK, 6.40, slabsGroup);
+      mBeltDiv.position.set(-4.875, slabY, 0);
+
+      // Зона 2: Монолитный пояс между зимней кухней и беседкой (над ригелем Оси 3)
+      const mBeltGaz = createMonolithBox(0.38, SLAB_THICK, 6.40, slabsGroup);
+      mBeltGaz.position.set(5.275, slabY, 0);
+
+      // Зона 3: Монолитный пояс по наружному торцу беседки (над торцевым ригелем Оси 2)
+      const mBeltEndGaz = createMonolithBox(0.38, SLAB_THICK, 6.40, slabsGroup);
+      mBeltEndGaz.position.set(9.285, slabY, 0);
     }
     buildCeilingSlabs();
 
