@@ -1773,6 +1773,16 @@
     if (urlParams.has('view')) {
       setView(urlParams.get('view'));
     }
+    if (urlParams.get('slabs') === '1') {
+      const chkS = document.getElementById('toggle-slabs');
+      if (chkS) chkS.checked = true;
+      toggleLayer('slabs', true);
+    }
+    if (urlParams.get('parapet') === '1') {
+      const chkP = document.getElementById('toggle-parapet');
+      if (chkP) chkP.checked = true;
+      toggleLayer('parapet', true);
+    }
 
     function animateCamera(newPos, newTarget) {
       const startPos = camera.position.clone();
