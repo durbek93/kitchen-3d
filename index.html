@@ -833,33 +833,52 @@
         </div>
       </div>
 
-      <!-- СЕКЦИЯ: СОЛНЦЕ И ИНСОЛЯЦИЯ -->
+      <!-- СЕКЦИЯ: СОЛНЦЕ И ИНСОЛЯЦИЯ (ФЕРГАНА) -->
       <div class="panel-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <span class="panel-title" style="margin-bottom: 0;">☀️ Солнце и инсоляция</span>
           <span id="sun-time-display" style="font-size: 13px; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.35);">
             13:00
           </span>
         </div>
 
+        <!-- Географическая плашка -->
+        <div style="font-size: 10px; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 6px; border-left: 2px solid #38bdf8; margin-bottom: 6px; display: flex; justify-content: space-between;">
+          <span>📍 40°21′ с.ш. (Фергана)</span>
+          <span style="color: #38bdf8; font-weight: 600;">Задняя стена: 156° ЮВ</span>
+        </div>
+
+        <!-- Сезонный переключатель -->
+        <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 6px; padding: 6px 10px; margin-bottom: 6px;">
+          <div style="display: flex; justify-content: space-between; width: 100%; font-size: 11px;">
+            <span style="color: var(--text-muted);">Сезон года:</span>
+            <span id="season-display" style="font-weight: 700; color: #f59e0b;">☀️ Лето (Чилля)</span>
+          </div>
+          <div class="segmented-control" style="display: flex; width: 100%; gap: 4px; background: rgba(15, 23, 42, 0.6); padding: 3px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <button type="button" class="btn-seg active" id="btn-season-summer" onclick="setSunSeason('summer')">☀️ Лето (Июль)</button>
+            <button type="button" class="btn-season btn-seg" id="btn-season-equinox" onclick="setSunSeason('equinox')">🌤️ Весна/Осень</button>
+            <button type="button" class="btn-season btn-seg" id="btn-season-winter" onclick="setSunSeason('winter')">❄️ Зима</button>
+          </div>
+        </div>
+
         <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
           <div style="display: flex; justify-content: space-between; width: 100%; font-size: 10px; color: var(--text-muted);">
-            <span>06:00 (Рассвет)</span>
-            <span>13:00 (Полдень)</span>
-            <span>21:00 (Закат)</span>
+            <span id="sun-rise-label">05:30 (Восход)</span>
+            <span>12:45 (Зенит)</span>
+            <span id="sun-set-label">20:00 (Закат)</span>
           </div>
-          <input type="range" min="6" max="21" step="0.1" value="13" class="range-slider" id="sun-slider" oninput="setSunTimeFromSlider(this.value)">
+          <input type="range" min="5.5" max="20" step="0.1" value="13" class="range-slider" id="sun-slider" oninput="setSunTimeFromSlider(this.value)">
         </div>
 
         <div id="sun-desc-display" style="font-size: 10.5px; color: #94a3b8; line-height: 1.4; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 2px solid #f59e0b; margin-bottom: 8px;">
-          ☀️ Полдень: солнце в зените на Юге, короткие тени под навесом
+          ☀️ 13:00 (Полдень): солнце высоко на Юге за задней стеной. Тень падает вперед во двор и под навес беседки!
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
           <button type="button" class="btn-seg" id="sun-btn-8" onclick="setSunPreset(8.0)">🌅 Утро (08:00)</button>
           <button type="button" class="btn-seg active" id="sun-btn-13" onclick="setSunPreset(13.0)">☀️ Полдень (13:00)</button>
-          <button type="button" class="btn-seg" id="sun-btn-18" onclick="setSunPreset(18.5)">🌇 Закат (18:30)</button>
-          <button type="button" class="btn-seg" id="sun-btn-20" onclick="setSunPreset(20.5)">🌙 Вечер (20:30)</button>
+          <button type="button" class="btn-seg" id="sun-btn-17" onclick="setSunPreset(17.0)">🌤️ День (17:00)</button>
+          <button type="button" class="btn-seg" id="sun-btn-19" onclick="setSunPreset(19.3)">🌇 Закат (19:20)</button>
         </div>
 
         <button id="btn-sun-play" class="btn-action btn-secondary" onclick="toggleSunAnimation()" style="width: 100%; font-size: 11.5px; padding: 8px 10px;">
@@ -867,10 +886,10 @@
         </button>
 
         <div style="margin-top: 8px; padding: 6px 8px; background: rgba(15, 23, 42, 0.6); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); font-size: 9.5px; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-          <div><strong style="color: #38bdf8;">ЮГ (Фасад):</strong> Двор и витражи</div>
-          <div><strong style="color: #64748b;">СЕВЕР:</strong> Глухая задняя стена</div>
-          <div><strong style="color: #f59e0b;">ВОСТОК:</strong> Беседка (рассвет)</div>
-          <div><strong style="color: #f97316;">ЗАПАД:</strong> Летняя кухня (закат)</div>
+          <div><strong style="color: #f59e0b;">ЗАДНЯЯ СТЕНА:</strong> 156° ЮВ (Солнце в спину)</div>
+          <div><strong style="color: #38bdf8;">ФАСАД / ДВОР:</strong> 336° СЗ (В тени днем)</div>
+          <div><strong style="color: #10b981;">БЕСЕДКА:</strong> 66° ВСВ (Утреннее солнце)</div>
+          <div><strong style="color: #f97316;">ЛЕТНЯЯ КУХНЯ:</strong> 246° ЗЮЗ (Вечерние лучи)</div>
         </div>
       </div>
 
@@ -2325,7 +2344,7 @@
     // ==========================================
     function build3DCompass() {
       const compGroup = new THREE.Group();
-      compGroup.position.set(0, 0.03, 7.8); // 7.8 м перед зданием по центру двора
+      compGroup.position.set(0, 0.03, 8.2); // Центр двора перед зданием
       dimensionsGroup.add(compGroup);
 
       // Внешнее круговое кольцо компаса (диаметр ~5 м)
@@ -2342,61 +2361,55 @@
       innerRing.rotation.x = -Math.PI / 2;
       compGroup.add(innerRing);
 
+      // Реальные единичные векторы сторон света для Ферганы (задняя стена = 156° ЮВ):
+      // СЕВЕР (0°): направлен во двор и чуть вправо (X=0.407, Z=0.914)
+      // ЮГ (180°): направлен за заднюю стену и чуть влево (X=-0.407, Z=-0.914)
+      // ВОСТОК (90°): направлен в сторону беседки и назад (X=0.914, Z=-0.407)
+      // ЗАПАД (270°): направлен в сторону летней кухни и вперед (X=-0.914, Z=0.407)
+      const vNorth = new THREE.Vector3(0.407, 0, 0.914);
+      const vSouth = new THREE.Vector3(-0.407, 0, -0.914);
+      const vEast = new THREE.Vector3(0.914, 0, -0.407);
+      const vWest = new THREE.Vector3(-0.914, 0, 0.407);
+
       // Осевые направляющие линии
       const lineMatNS = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 });
       const lineMatEW = new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 });
 
-      // Ось Z (Север - Юг)
+      // Ось Север - Юг
       const geomNS = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0.01, -2.4),
-        new THREE.Vector3(0, 0.01, 2.4)
+        vSouth.clone().multiplyScalar(2.4),
+        vNorth.clone().multiplyScalar(2.4)
       ]);
       compGroup.add(new THREE.Line(geomNS, lineMatNS));
 
-      // Ось X (Запад - Восток)
+      // Ось Запад - Восток
       const geomEW = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-2.4, 0.01, 0),
-        new THREE.Vector3(2.4, 0.01, 0)
+        vWest.clone().multiplyScalar(2.4),
+        vEast.clone().multiplyScalar(2.4)
       ]);
       compGroup.add(new THREE.Line(geomEW, lineMatEW));
 
-      // Стрелка ЮГ (+Z, к фасаду и зрителю)
-      const arrowSouthGeom = new THREE.ConeGeometry(0.22, 0.60, 4);
-      const arrowSouthMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-      const arrowSouth = new THREE.Mesh(arrowSouthGeom, arrowSouthMat);
-      arrowSouth.position.set(0, 0.01, 2.4);
-      arrowSouth.rotation.x = Math.PI / 2;
-      compGroup.add(arrowSouth);
+      // Функция создания стрелки конуса по заданному направлению
+      function createArrow(dir, color, size) {
+        const coneGeom = new THREE.ConeGeometry(0.18, size || 0.55, 4);
+        const coneMat = new THREE.MeshBasicMaterial({ color });
+        const cone = new THREE.Mesh(coneGeom, coneMat);
+        cone.position.copy(dir.clone().multiplyScalar(2.4));
+        cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+        return cone;
+      }
 
-      // Стрелка СЕВЕР (-Z, к глухой задней стене)
-      const arrowNorthGeom = new THREE.ConeGeometry(0.18, 0.50, 4);
-      const arrowNorthMat = new THREE.MeshBasicMaterial({ color: 0x64748b });
-      const arrowNorth = new THREE.Mesh(arrowNorthGeom, arrowNorthMat);
-      arrowNorth.position.set(0, 0.01, -2.4);
-      arrowNorth.rotation.x = -Math.PI / 2;
-      compGroup.add(arrowNorth);
+      compGroup.add(createArrow(vNorth, 0x38bdf8, 0.60)); // Север (синий)
+      compGroup.add(createArrow(vSouth, 0xf59e0b, 0.60)); // Юг (янтарный - солнце!)
+      compGroup.add(createArrow(vEast, 0x10b981, 0.50));  // Восток (зеленый)
+      compGroup.add(createArrow(vWest, 0xf97316, 0.50));  // Запад (оранжевый)
 
-      // Стрелка ВОСТОК (+X, к беседке)
-      const arrowEastGeom = new THREE.ConeGeometry(0.20, 0.55, 4);
-      const arrowEastMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
-      const arrowEast = new THREE.Mesh(arrowEastGeom, arrowEastMat);
-      arrowEast.position.set(2.4, 0.01, 0);
-      arrowEast.rotation.z = -Math.PI / 2;
-      compGroup.add(arrowEast);
-
-      // Стрелка ЗАПАД (-X, к летней кухне)
-      const arrowWestGeom = new THREE.ConeGeometry(0.20, 0.55, 4);
-      const arrowWestMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
-      const arrowWest = new THREE.Mesh(arrowWestGeom, arrowWestMat);
-      arrowWest.position.set(-2.4, 0.01, 0);
-      arrowWest.rotation.z = Math.PI / 2;
-      compGroup.add(arrowWest);
-
-      // 3D выноски сторон света
-      add3DLabel([0, 0.35, 10.7], "ЮГ: Фасад, двор и витражи", 0x38bdf8);
-      add3DLabel([0, 0.35, 4.9], "СЕВЕР: Задняя глухая стена", 0x64748b);
-      add3DLabel([3.3, 0.35, 7.8], "ВОСТОК: Беседка (рассвет)", 0xf59e0b);
-      add3DLabel([-3.3, 0.35, 7.8], "ЗАПАД: Летняя кухня (закат)", 0xf97316);
+      // 3D выноски сторон света (привязаны к реальным азимутам участка)
+      const cCenter = compGroup.position;
+      add3DLabel([cCenter.x + vNorth.x * 3.3, 0.35, cCenter.z + vNorth.z * 3.3], "СЕВЕР (336°: Фасад и двор)", 0x38bdf8);
+      add3DLabel([cCenter.x + vSouth.x * 3.3, 0.35, cCenter.z + vSouth.z * 3.3], "ЮГ (156°: Задняя стена)", 0xf59e0b);
+      add3DLabel([cCenter.x + vEast.x * 3.3, 0.35, cCenter.z + vEast.z * 3.3], "ВОСТОК (66°: Беседка)", 0x10b981);
+      add3DLabel([cCenter.x + vWest.x * 3.3, 0.35, cCenter.z + vWest.z * 3.3], "ЗАПАД (246°: Летняя кухня)", 0xf97316);
     }
     build3DCompass();
 
@@ -2458,52 +2471,159 @@
     });
 
     // ==========================================
-    // СИМУЛЯЦИЯ СОЛНЦА И ИНСОЛЯЦИИ
+    // СИМУЛЯЦИЯ СОЛНЦА И ИНСОЛЯЦИИ (ФЕРГАНА, УЗБЕКИСТАН)
+    // Геоданные: 40°20′57″ с.ш. (40.35°), 71°48′57″ в.д.
+    // Азимуты здания: Задняя стена = 156° ЮВ | Фасад (двор) = 336° СЗ | Беседка = 66° ВСВ
     // ==========================================
+    const LAT_FERGANA_RAD = THREE.MathUtils.degToRad(40.35); // 40.35° с.ш.
+    const AZ_GAZEBO_DEG = 66.0; // Азимут оси беседки (+X) в реальных координатах
+
+    let currentSeason = 'summer'; // 'summer', 'equinox', 'winter'
     let sunHour = 13.0; // 13:00 (Полдень)
     let isSunPlaying = false;
     let sunPlaySpeed = 0.025; // шаг прокрутки часов за кадр
 
-    function updateSun(hour, updateUI = true) {
-      sunHour = Math.max(6.0, Math.min(21.0, hour));
+    const SEASONS = {
+      summer: {
+        id: 'summer',
+        name: '☀️ Лето (Чилля / Июль)',
+        declinationDeg: 21.5,
+        riseHour: 5.4,
+        setHour: 20.0,
+        noonElevationDeg: 71.2,
+        sliderMin: 5.5,
+        sliderMax: 20.0,
+        riseLabel: '05:30 (Восход)',
+        setLabel: '20:00 (Закат)'
+      },
+      equinox: {
+        id: 'equinox',
+        name: '🌤️ Весна / Осень (Равноденствие)',
+        declinationDeg: 0.0,
+        riseHour: 6.0,
+        setHour: 18.5,
+        noonElevationDeg: 49.65,
+        sliderMin: 6.0,
+        sliderMax: 18.5,
+        riseLabel: '06:00 (Восход)',
+        setLabel: '18:30 (Закат)'
+      },
+      winter: {
+        id: 'winter',
+        name: '❄️ Зима (Декабрь / Январь)',
+        declinationDeg: -23.0,
+        riseHour: 7.4,
+        setHour: 17.0,
+        noonElevationDeg: 26.65,
+        sliderMin: 7.5,
+        sliderMax: 17.0,
+        riseLabel: '07:30 (Восход)',
+        setLabel: '17:00 (Закат)'
+      }
+    };
 
-      // Траектория движения солнца: Восток (+X) -> Юг (+Z) -> Запад (-X)
-      const t = (sunHour - 6.0) / (21.0 - 6.0); // 0.0 ... 1.0
-      const azimuth = Math.PI * (1.0 - t); // от PI (Восток) к 0 (Запад)
+    function setSunSeason(seasonKey) {
+      if (!SEASONS[seasonKey]) return;
+      currentSeason = seasonKey;
 
-      const noonFactor = Math.sin(t * Math.PI);
-      const elev = 0.12 + Math.pow(noonFactor, 0.75) * 1.05; // угол над горизонтом
+      // Обновление переключателя сезонов
+      ['summer', 'equinox', 'winter'].forEach(s => {
+        const btn = document.getElementById('btn-season-' + s);
+        if (btn) btn.classList.toggle('active', s === seasonKey);
+      });
+
+      const seasonLabel = document.getElementById('season-display');
+      if (seasonLabel) seasonLabel.textContent = SEASONS[seasonKey].name;
+
+      const riseLabel = document.getElementById('sun-rise-label');
+      const setLabel = document.getElementById('sun-set-label');
+      const slider = document.getElementById('sun-slider');
+      if (riseLabel) riseLabel.textContent = SEASONS[seasonKey].riseLabel;
+      if (setLabel) setLabel.textContent = SEASONS[seasonKey].setLabel;
+      if (slider) {
+        slider.min = SEASONS[seasonKey].sliderMin;
+        slider.max = SEASONS[seasonKey].sliderMax;
+        if (sunHour < parseFloat(slider.min)) sunHour = parseFloat(slider.min);
+        if (sunHour > parseFloat(slider.max)) sunHour = parseFloat(slider.max);
+        slider.value = sunHour;
+      }
+
+      updateSun(sunHour, true);
+      updatePresetButtons(sunHour);
+    }
+
+    function calculateSunPosition(hour, seasonKey) {
+      const cfg = SEASONS[seasonKey] || SEASONS.summer;
+      const declRad = THREE.MathUtils.degToRad(cfg.declinationDeg);
+      const latRad = LAT_FERGANA_RAD;
+
+      // Часовой угол солнца: в Фергане истинный солнечный полдень наступает около 12:45 местного времени (UTC+5)
+      const hourAngleRad = (hour - 12.75) * THREE.MathUtils.degToRad(15.0);
+
+      // Высота солнца над горизонтом (Elevation angle)
+      const sinElev = Math.sin(latRad) * Math.sin(declRad) + Math.cos(latRad) * Math.cos(declRad) * Math.cos(hourAngleRad);
+      const elevRad = Math.asin(Math.max(-0.25, Math.min(1.0, sinElev)));
+
+      // Азимут солнца от точки Севера (0°=Север, 90°=Восток, 180°=Юг, 270°=Запад)
+      const y = Math.sin(hourAngleRad);
+      const x = Math.cos(hourAngleRad) * Math.sin(latRad) - Math.tan(declRad) * Math.cos(latRad);
+      let azRad = Math.atan2(y, x) + Math.PI;
+      if (azRad < 0) azRad += Math.PI * 2;
+      if (azRad >= Math.PI * 2) azRad -= Math.PI * 2;
+
+      // Перевод в 3D координаты модели:
+      // Азимут относительно оси беседки (+X, 66° ВСВ)
+      const azBuildingRad = azRad - THREE.MathUtils.degToRad(AZ_GAZEBO_DEG);
 
       const radius = 55.0;
-      const sunX = Math.cos(azimuth) * radius * Math.cos(elev);
-      const sunZ = Math.sin(azimuth) * radius * Math.cos(elev) * 0.70 + 8.0;
-      const sunY = Math.max(3.0, Math.sin(elev) * radius);
+      const clampedElev = Math.max(0.035, elevRad);
+      const cosElev = Math.cos(clampedElev);
 
-      sunLight.position.set(sunX, sunY, sunZ);
+      const sunX = radius * cosElev * Math.cos(azBuildingRad);
+      const sunZ = -radius * cosElev * Math.sin(azBuildingRad);
+      const sunY = radius * Math.sin(clampedElev);
+
+      return {
+        x: sunX,
+        y: sunY,
+        z: sunZ,
+        elevationDeg: THREE.MathUtils.radToDeg(elevRad),
+        azimuthDeg: THREE.MathUtils.radToDeg(azRad),
+        isDaylight: elevRad > 0.015
+      };
+    }
+
+    function updateSun(hour, updateUI = true) {
+      const cfg = SEASONS[currentSeason] || SEASONS.summer;
+      sunHour = Math.max(parseFloat(cfg.sliderMin), Math.min(parseFloat(cfg.sliderMax), hour));
+
+      const sunPos = calculateSunPosition(sunHour, currentSeason);
+
+      sunLight.position.set(sunPos.x, sunPos.y, sunPos.z);
       sunLight.target.position.set(0, 1.2, 0);
       sunLight.target.updateMatrixWorld();
 
-      // Освещение и цветовая температура атмосферы
+      // Освещение и цветовая температура атмосферы Ферганы
       let sunColor, ambientIntensity, sunIntensity;
+      const elev = sunPos.elevationDeg;
 
-      if (sunHour < 7.5) {
-        // Утренний рассвет: теплый золотисто-оранжевый свет
-        const f = (sunHour - 6.0) / 1.5;
-        sunColor = new THREE.Color(0xff8c42).lerp(new THREE.Color(0xffd59e), f);
-        sunIntensity = 0.95 + f * 0.40;
-        ambientIntensity = 0.48 + f * 0.22;
-      } else if (sunHour > 18.5) {
-        // Вечер и закат: насыщенный оранжевый закат
-        const f = (21.0 - sunHour) / 2.5;
-        sunColor = new THREE.Color(0xff6b35).lerp(new THREE.Color(0xffcaa0), f);
-        sunIntensity = 0.35 + f * 1.0;
-        ambientIntensity = 0.38 + f * 0.32;
+      if (elev < 8.0) {
+        // Заря / закат у горизонта (теплый медно-оранжевый свет)
+        const f = Math.max(0, elev) / 8.0;
+        sunColor = new THREE.Color(0xff6b35).lerp(new THREE.Color(0xffaa5e), f);
+        sunIntensity = 0.40 + f * 0.70;
+        ambientIntensity = 0.35 + f * 0.25;
+      } else if (elev < 25.0) {
+        // Утро / вечер (золотисто-теплый)
+        const f = (elev - 8.0) / 17.0;
+        sunColor = new THREE.Color(0xffaa5e).lerp(new THREE.Color(0xfff3d6), f);
+        sunIntensity = 1.10 + f * 0.35;
+        ambientIntensity = 0.60 + f * 0.15;
       } else {
-        // Дневное солнце: яркий чистый белый свет
-        const f = Math.sin(((sunHour - 7.5) / 11.0) * Math.PI);
-        sunColor = new THREE.Color(0xfffaed).lerp(new THREE.Color(0xffffff), f);
-        sunIntensity = 1.35 + f * 0.35;
-        ambientIntensity = 0.70 + f * 0.15;
+        // Дневное южное солнце Ферганы (яркий чистый свет)
+        sunColor = new THREE.Color(0xfffaed);
+        sunIntensity = 1.55;
+        ambientIntensity = 0.78;
       }
 
       sunLight.color.copy(sunColor);
@@ -2511,7 +2631,8 @@
       ambientLight.intensity = ambientIntensity;
 
       // Теплый интерьерный свет комнат усиливается утром и в сумерках
-      const intBoost = sunHour < 8.0 || sunHour > 18.0 ? 1.6 : 0.9;
+      const isDusk = elev < 12.0;
+      const intBoost = isDusk ? 1.6 : 0.9;
       intStudioLight1.intensity = 1.4 * intBoost;
       intStudioLight2.intensity = 1.4 * intBoost;
       intGazeboLight.intensity = 0.9 * intBoost;
@@ -2530,18 +2651,18 @@
           timeLabel.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
         if (descLabel) {
-          if (sunHour <= 8.0) {
-            descLabel.textContent = '🌅 Утро: восход солнца над беседкой (Восток), длинные тени на запад';
+          const az = Math.round(sunPos.azimuthDeg);
+          const el = Math.round(sunPos.elevationDeg);
+          if (sunHour <= 8.5) {
+            descLabel.textContent = `🌅 Утро (${el}° над горизонтом, азимут ${az}°): солнце встает над беседкой (Восток), утренние лучи приятно согревают террасу`;
           } else if (sunHour <= 11.5) {
-            descLabel.textContent = '☀️ Первая половина дня: солнце заливает фасад и террасу';
+            descLabel.textContent = `☀️ Первая половина дня (${el}°, азимут ${az}°): солнце переходит на Юго-Восток, прогревает заднюю глухую стену`;
           } else if (sunHour <= 14.5) {
-            descLabel.textContent = '☀️ Полдень: солнце в зените на Юге, короткие тени под навесом';
+            descLabel.textContent = `☀️ Полдень (${el}° зенит, азимут ${az}°): солнце на Юге прямо за задней стеной! Здание закрывает собой двор — терраса и беседка в спасительной тени`;
           } else if (sunHour <= 17.5) {
-            descLabel.textContent = '🌤️ Вторая половина дня: солнце плавно переходит к летней кухне';
-          } else if (sunHour <= 19.5) {
-            descLabel.textContent = '🌇 Вечер / закат: лучи с Запада освещают летнюю кухню и санузел';
+            descLabel.textContent = `🌤️ Вторая половина дня (${el}°, азимут ${az}°): солнце смещается на Юго-Запад к летней кухне, защищая витражи зимней кухни от перегрева`;
           } else {
-            descLabel.textContent = '🌙 Сумерки: вечернее освещение, включен теплый интерьерный свет';
+            descLabel.textContent = `🌇 Закат (${el}°, азимут ${az}°): мягкие закатные лучи с Северо-Запада освещают фасад зимней кухни и санузла`;
           }
         }
       }
@@ -2563,12 +2684,12 @@
       const presets = [
         { id: 'sun-btn-8', val: 8.0 },
         { id: 'sun-btn-13', val: 13.0 },
-        { id: 'sun-btn-18', val: 18.5 },
-        { id: 'sun-btn-20', val: 20.5 }
+        { id: 'sun-btn-17', val: 17.0 },
+        { id: 'sun-btn-19', val: 19.3 }
       ];
       presets.forEach(p => {
         const btn = document.getElementById(p.id);
-        if (btn) btn.classList.toggle('active', Math.abs(p.val - hour) < 1.0);
+        if (btn) btn.classList.toggle('active', Math.abs(p.val - hour) < 0.9);
       });
     }
 
@@ -2606,9 +2727,16 @@
       updateOpeningsUI();
       animOpenings.forEach(op => op.update(1.0));
     }
+    if (urlParams.has('season')) {
+      setSunSeason(urlParams.get('season'));
+    }
     if (urlParams.has('sun')) {
       updateSun(parseFloat(urlParams.get('sun')), true);
       updatePresetButtons(parseFloat(urlParams.get('sun')));
+    }
+    if (urlParams.get('scroll') === 'sun') {
+      const panel = document.getElementById('side-panel');
+      if (panel) panel.scrollTop = 750;
     }
 
     // ==========================================
@@ -2681,9 +2809,11 @@
 
       // Анимация суточного хода солнца
       if (isSunPlaying) {
+        const cfg = SEASONS[currentSeason] || SEASONS.summer;
         sunHour += sunPlaySpeed;
-        if (sunHour > 21.0) sunHour = 6.0;
+        if (sunHour > parseFloat(cfg.sliderMax)) sunHour = parseFloat(cfg.sliderMin);
         updateSun(sunHour, true);
+        updatePresetButtons(sunHour);
       }
 
       controls.update();
