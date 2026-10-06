@@ -748,7 +748,7 @@
         </div>
 
         <div class="control-row">
-          <span>Крыша (односкатная)</span>
+          <span>Кровля (профнастил 0.45 + водосток)</span>
           <label class="toggle-switch">
             <input type="checkbox" id="toggle-roof" onchange="toggleLayer('roof', this.checked)">
             <span class="slider"></span>
@@ -756,7 +756,23 @@
         </div>
 
         <div class="control-row">
-          <span>Парапетная стена (75 см)</span>
+          <span>Стропила и обрешётка (35×140, шаг 80)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-rafters" onchange="toggleLayer('rafters', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Теплоизоляция XPS (Пеноплэкс 50 мм)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-insulation" onchange="toggleLayer('insulation', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Парапетная стена (90 см)</span>
           <label class="toggle-switch">
             <input type="checkbox" id="toggle-parapet" onchange="toggleLayer('parapet', this.checked)">
             <span class="slider"></span>
@@ -1172,6 +1188,41 @@
       side: THREE.DoubleSide
     });
 
+    // Оцинкованный профнастил 0.45 мм
+    const galvanizedMat = new THREE.MeshStandardMaterial({
+      color: 0xa1a1aa,
+      roughness: 0.35,
+      metalness: 0.75,
+      side: THREE.DoubleSide
+    });
+
+    // Фольгоизол (серебристый отражающий слой)
+    const folgoMat = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      roughness: 0.25,
+      metalness: 0.85,
+      side: THREE.DoubleSide
+    });
+
+    // Теплоизоляция XPS (Пеноплэкс 50 мм) фирменного оранжевого цвета
+    const xpsMat = new THREE.MeshStandardMaterial({
+      color: 0xf97316,
+      roughness: 0.85,
+      metalness: 0.05
+    });
+
+    const xpsEdgeMat = new THREE.LineBasicMaterial({
+      color: 0xc2410c,
+      linewidth: 1
+    });
+
+    // Водосточные желоба и трубы
+    const gutterMat = new THREE.MeshStandardMaterial({
+      color: 0x475569,
+      roughness: 0.40,
+      metalness: 0.50
+    });
+
     const timberMat = new THREE.MeshStandardMaterial({
       color: 0xbc9470,
       roughness: 0.75,
@@ -1244,6 +1295,8 @@
 
     const parapetGroup = new THREE.Group();
     const slabsGroup = new THREE.Group();
+    const insulationGroup = new THREE.Group();
+    const raftersGroup = new THREE.Group();
     const pitchedRoofGroup = new THREE.Group();
     const wallsGroup = new THREE.Group();
     const columnsGroup = new THREE.Group();
@@ -1255,6 +1308,8 @@
 
     scene.add(parapetGroup);
     scene.add(slabsGroup);
+    scene.add(insulationGroup);
+    scene.add(raftersGroup);
     scene.add(pitchedRoofGroup);
     scene.add(wallsGroup);
     scene.add(columnsGroup);
@@ -1266,6 +1321,8 @@
 
     parapetGroup.visible = false;
     slabsGroup.visible = false;
+    insulationGroup.visible = false;
+    raftersGroup.visible = false;
     pitchedRoofGroup.visible = false;
 
     // Реестры интерактивных открывающихся проёмов (двери, окна, форточка, витраж)
@@ -1346,7 +1403,7 @@
     const BEAM_W = 0.38; // Ригели/балки: ширина 38 см (под 1.5 кирпича)
     const BEAM_BOT = WALL_TOP - BEAM_H; // 2.80 м (низ ригелей над проемами и кладкой)
     const SLAB_THICK = 0.22; // Толщина плит ПК (22 см)
-    const PARAPET_H = 0.75; // Парапет 75 см
+    const PARAPET_H = 0.90; // Парапет 90 см (скрывает кровлю со двора)
 
     // Ground plane & grid (в группе groundGroup для скрытия при виде снизу)
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(50, 40), groundMat);
@@ -2044,14 +2101,15 @@
     }
     buildCeilingSlabs();
 
-    // Parapet Wall (18.95 × 6.85 м, Metric UV)
+    // 1. Парапетная стена (18.95 × 6.85 м, H = 90 см от плит, отметка верха Y = 4.32 м)
     function buildParapet() {
-      const parapetBaseY = WALL_TOP + SLAB_THICK; // 3.42m
-      const pY = parapetBaseY + PARAPET_H / 2;
+      const parapetBaseY = WALL_TOP + SLAB_THICK; // 3.42 м
+      const pY = parapetBaseY + PARAPET_H / 2; // 3.87 м
       const pThick = 0.38;
 
+      // Передний фасадный парапет (18.95 м, высота 90 см)
       const pFront = createBoxWithMetricUV(18.95, PARAPET_H, pThick, brickMat, parapetGroup);
-      pFront.position.set(0, pY, 3.225);
+      pFront.position.set(0, pY, 3.235);
 
       // Боковые парапетные стены на полную глубину 6.85 м (Z: от -3.425 до +3.425 м)
       const pDepth = 6.85;
@@ -2061,11 +2119,12 @@
       const pRight = createBoxWithMetricUV(pThick, PARAPET_H, pDepth, brickMat, parapetGroup);
       pRight.position.set(9.285, pY, 0);
 
-      const capH = 0.05;
+      // Оцинкованные парапетные крышки (фартуки с капельником)
+      const capH = 0.04;
       const capY = parapetBaseY + PARAPET_H + capH / 2;
 
       const capFront = createBox(18.95, capH, pThick + 0.06, parapetCapMat, parapetGroup);
-      capFront.position.set(0, capY, 3.225);
+      capFront.position.set(0, capY, 3.235);
 
       const capLeft = createBox(pThick + 0.06, capH, pDepth + 0.06, parapetCapMat, parapetGroup);
       capLeft.position.set(-9.285, capY, 0);
@@ -2075,41 +2134,204 @@
     }
     buildParapet();
 
-    // Roof & Rafters above slabs (18.95 × 6.85 м + 1.0м свес назад)
-    function buildPitchedRoof() {
-      const roofL = 18.55;
-      const roofW = 7.45;
-      const centerZ = (2.95 + (-4.425)) / 2;
+    // 2. Теплоизоляционный ковёр XPS (Пеноплэкс 50 мм) + плёнка 200 мкм + временный настил лестницы
+    function buildInsulation() {
+      const slabTopY = WALL_TOP + SLAB_THICK; // 3.42 м
 
-      const drop = 0.52;
-      const angle = -Math.atan2(drop, roofW);
+      // А) Временное перекрытие лестничного проёма над беседкой (3.85 × 1.22 м, X: 5.35 до 9.20, Z: -2.425)
+      // Опорные поперечные балки 50×100 мм под настил
+      const joistZ = [-2.85, -2.425, -2.00];
+      joistZ.forEach(jz => {
+        const jst = createBox(3.85, 0.05, 0.10, timberMat, insulationGroup);
+        jst.position.set(7.275, slabTopY - 0.05, jz);
+      });
+      // Деревянный сплошной настил из досок 25 мм в уровень с плитами
+      const stairCover = createBox(3.85, 0.025, 1.20, timberMat, insulationGroup);
+      stairCover.position.set(7.275, slabTopY - 0.0125, -2.425);
 
-      const mRear = createBox(18.55, 0.10, 0.15, timberMat, pitchedRoofGroup);
-      mRear.position.set(0, 3.42 + 0.05, -3.225);
+      // Б) Пароизоляционная плёнка 200 мкм (сплошной слой по всей площади плит)
+      const vaporGeom = new THREE.PlaneGeometry(18.55, 6.45);
+      const vaporMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide, opacity: 0.75, transparent: true });
+      const vaporMesh = new THREE.Mesh(vaporGeom, vaporMat);
+      vaporMesh.rotation.x = -Math.PI / 2;
+      vaporMesh.position.set(0, slabTopY + 0.002, 0);
+      insulationGroup.add(vaporMesh);
 
-      const mFront = createBox(18.55, 0.50, 0.15, timberMat, pitchedRoofGroup);
-      mFront.position.set(0, 3.42 + 0.25, 2.825);
+      // В) Плиты XPS (Пеноплэкс) толщиной 50 мм по всему зданию
+      const xpsThick = 0.05;
+      const xpsY = slabTopY + xpsThick / 2 + 0.005;
+      const xpsTotalW = 18.55;
+      const xpsTotalD = 6.45;
 
-      const rafterH = 0.16;
-      const rafterCenterY = 3.82;
+      const xpsMesh = new THREE.Mesh(new THREE.BoxGeometry(xpsTotalW, xpsThick, xpsTotalD), xpsMat);
+      xpsMesh.position.set(0, xpsY, 0);
+      xpsMesh.castShadow = true;
+      xpsMesh.receiveShadow = true;
 
-      for (let x = -8.8; x <= 8.8; x += 1.45) {
-        const rafter = createBox(0.08, rafterH, roofW - 0.10, timberMat, pitchedRoofGroup);
-        rafter.rotation.x = angle;
-        rafter.position.set(x, rafterCenterY, centerZ);
+      const xpsEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(xpsTotalW, xpsThick, xpsTotalD));
+      xpsMesh.add(new THREE.LineSegments(xpsEdges, xpsEdgeMat));
+      insulationGroup.add(xpsMesh);
+
+      // Линии сетки швов плит Пеноплэкс (1.20 × 0.60 м)
+      const seamPoints = [];
+      for (let z = -3.0; z <= 3.01; z += 0.60) {
+        seamPoints.push(new THREE.Vector3(-xpsTotalW / 2, xpsY + xpsThick / 2 + 0.001, z));
+        seamPoints.push(new THREE.Vector3(xpsTotalW / 2, xpsY + xpsThick / 2 + 0.001, z));
+      }
+      for (let x = -8.4; x <= 8.41; x += 1.20) {
+        seamPoints.push(new THREE.Vector3(x, xpsY + xpsThick / 2 + 0.001, -xpsTotalD / 2));
+        seamPoints.push(new THREE.Vector3(x, xpsY + xpsThick / 2 + 0.001, xpsTotalD / 2));
+      }
+      const seamLinesGeom = new THREE.BufferGeometry().setFromPoints(seamPoints);
+      const seamLines = new THREE.LineSegments(seamLinesGeom, xpsEdgeMat);
+      insulationGroup.add(seamLines);
+    }
+    buildInsulation();
+
+    // 3. Стропильная система из дерева (стропила 35×140 мм, шаг 80 см, центральный прогон, обрешётка 40×50 мм)
+    function buildRafters() {
+      const slabTopY = WALL_TOP + SLAB_THICK; // 3.42 м
+
+      // Геометрия ската кровли:
+      // Передняя граница у парапета: Z = +3.045 м. Низ стропил Y = 4.00 м (верх стропил 4.14 м, верх парапета 4.32 м -> спрятана на 18 см!).
+      // Задняя граница со свесом 50 см: задняя стена Z = -3.425 м, край свеса Z = -3.925 м.
+      // Низ стропил на задней стене (Z = -3.425 м): Y = 3.455 м (на мауэрлате).
+      // Низ стропил на краю свеса (Z = -3.925 м): Y = 3.415 м.
+      const zFront = 3.045;
+      const zRearWall = -3.425;
+      const zRearEdge = -3.925;
+      const deltaZ = zFront - zRearEdge; // 6.97 м
+      const deltaY = 4.00 - 3.415;       // 0.585 м
+      const slopeAngle = -Math.atan2(deltaY, deltaZ); // ~ -4.8° .. -5.0°
+      const rafterLength = Math.hypot(deltaZ, deltaY) + 0.02; // ~6.995 м
+      const rafterCenterZ = (zFront + zRearEdge) / 2; // -0.44 м
+      const rafterCenterY = (4.00 + 3.415) / 2 + 0.07; // 3.777 м
+
+      // А) Передний опорный брус и стойки
+      const frontPurlin = createBox(18.55, 0.10, 0.10, timberMat, raftersGroup);
+      frontPurlin.position.set(0, 3.95, zFront - 0.05);
+
+      for (let x = -8.4; x <= 8.41; x += 2.4) {
+        const post = createBox(0.10, 0.48, 0.10, timberMat, raftersGroup);
+        post.position.set(x, 3.42 + 0.24, zFront - 0.05);
       }
 
-      const roofMesh = new THREE.Mesh(new THREE.BoxGeometry(roofL, 0.06, roofW), roofMat);
-      roofMesh.rotation.x = angle;
-      roofMesh.position.set(0, rafterCenterY + rafterH / 2 + 0.03, centerZ);
-      roofMesh.castShadow = true;
-      roofMesh.receiveShadow = true;
+      // Б) Задний мауэрлат: доска 35×140 мм плашмя по верху задней стены через рубероид
+      const rearMauerlat = createBox(18.55, 0.035, 0.14, timberMat, raftersGroup);
+      rearMauerlat.position.set(0, slabTopY + 0.0175, -3.235);
 
-      const edges = new THREE.EdgesGeometry(roofMesh.geometry);
-      roofMesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x94a3b8 })));
-      pitchedRoofGroup.add(roofMesh);
+      // В) Центральный разгрузочный прогон по середине ЖБ-плит
+      const zMid = (zFront + zRearWall) / 2; // -0.19 м
+      const midY = 3.42 + ((4.00 - 3.455) * (zMid - zRearWall) / (zFront - zRearWall)); // ~3.72 м
+      const midPostH = midY - 0.08 - slabTopY;
+
+      const midLezhen = createBox(18.55, 0.035, 0.14, timberMat, raftersGroup);
+      midLezhen.position.set(0, slabTopY + 0.0175, zMid);
+
+      const midPurlin = createBox(18.55, 0.08, 0.10, timberMat, raftersGroup);
+      midPurlin.position.set(0, midY - 0.04, zMid);
+
+      for (let x = -8.4; x <= 8.41; x += 2.4) {
+        const mPost = createBox(0.08, midPostH, 0.08, timberMat, raftersGroup);
+        mPost.position.set(x, slabTopY + 0.035 + midPostH / 2, zMid);
+      }
+
+      // Г) Стропильные ноги 35 × 140 мм с шагом ровно 80 см (0.80 м)
+      const rafterThickness = 0.035;
+      const rafterHeight = 0.14;
+
+      for (let x = -8.8; x <= 8.81; x += 0.80) {
+        const rafter = createBox(rafterThickness, rafterHeight, rafterLength, timberMat, raftersGroup);
+        rafter.rotation.x = slopeAngle;
+        rafter.position.set(x, rafterCenterY, rafterCenterZ);
+      }
+
+      // Д) Обрешётка: бруски 40 × 50 мм поперёк стропил с шагом 38 см
+      const battW = 18.55;
+      const battThick = 0.04;
+      const battDepth = 0.05;
+      const numBattens = 18;
+      const battStep = rafterLength / (numBattens - 1);
+
+      for (let i = 0; i < numBattens; i++) {
+        const relDist = -rafterLength / 2 + i * battStep;
+        const bZ = rafterCenterZ + relDist * Math.cos(slopeAngle);
+        const bY = rafterCenterY - relDist * Math.sin(slopeAngle) + rafterHeight / 2 + battThick / 2;
+
+        const batten = createBox(battW, battThick, battDepth, timberMat, raftersGroup);
+        batten.rotation.x = slopeAngle;
+        batten.position.set(0, bY, bZ);
+      }
     }
-    buildPitchedRoof();
+    buildRafters();
+
+    // 4. Кровельное покрытие (Фольгоизол, профнастил 0.45 мм, фартук и водосток со свесом 50 см)
+    function buildRoofCovering() {
+      const zFront = 3.045;
+      const zRearEdge = -3.925;
+      const deltaZ = zFront - zRearEdge;
+      const deltaY = 4.00 - 3.415;
+      const slopeAngle = -Math.atan2(deltaY, deltaZ);
+      const rafterLength = Math.hypot(deltaZ, deltaY) + 0.02;
+      const rafterCenterZ = (zFront + zRearEdge) / 2;
+      const rafterCenterY = (4.00 + 3.415) / 2 + 0.07;
+      const roofPlaneY = rafterCenterY + 0.07 + 0.04 + 0.01;
+
+      const roofW = 18.55;
+
+      // А) Слой Фольгоизола (серебристый металлизированный теплоотражатель)
+      const folgoMesh = new THREE.Mesh(new THREE.PlaneGeometry(roofW, rafterLength), folgoMat);
+      folgoMesh.rotation.x = slopeAngle - Math.PI / 2;
+      folgoMesh.position.set(0, roofPlaneY - 0.005, rafterCenterZ);
+      pitchedRoofGroup.add(folgoMesh);
+
+      // Б) Оцинкованный профнастил 0.45 мм со свесом 50 см сзади
+      const profMesh = new THREE.Mesh(new THREE.BoxGeometry(roofW, 0.015, rafterLength), galvanizedMat);
+      profMesh.rotation.x = slopeAngle;
+      profMesh.position.set(0, roofPlaneY + 0.008, rafterCenterZ);
+      profMesh.castShadow = true;
+      profMesh.receiveShadow = true;
+
+      // Трапециевидные волны (гофры) профнастила каждые 20 см вдоль здания
+      const ribPoints = [];
+      const halfL = rafterLength / 2;
+      for (let rx = -roofW / 2 + 0.10; rx <= roofW / 2; rx += 0.20) {
+        ribPoints.push(new THREE.Vector3(rx, 0.015, -halfL));
+        ribPoints.push(new THREE.Vector3(rx, 0.015, halfL));
+      }
+      const ribsGeom = new THREE.BufferGeometry().setFromPoints(ribPoints);
+      const ribLines = new THREE.LineSegments(ribsGeom, new THREE.LineBasicMaterial({ color: 0x64748b, linewidth: 2 }));
+      profMesh.add(ribLines);
+      pitchedRoofGroup.add(profMesh);
+
+      // В) Пристенная планка примыкания (фартук) со стороны переднего парапета
+      const apronH = 0.15;
+      const apronD = 0.12;
+      const apronY = 4.00 + 0.07 + 0.04 + 0.05;
+      const apron = createBox(roofW, apronH, apronD, parapetCapMat, pitchedRoofGroup);
+      apron.rotation.x = slopeAngle * 0.5;
+      apron.position.set(0, apronY, zFront - 0.02);
+
+      // Г) Водосточная система вдоль заднего свеса (Z = -3.925 м)
+      const gutterY = 3.415 + 0.07 + 0.04 - 0.04;
+      const gutter = createBox(roofW + 0.20, 0.08, 0.14, gutterMat, pitchedRoofGroup);
+      gutter.position.set(0, gutterY, zRearEdge - 0.05);
+
+      // Три водосточные трубы 100 мм: по краям X = ±8.80 и по центру X = 0
+      const downpipePositions = [-8.80, 0.00, 8.80];
+      const pipeH = gutterY - 0.20;
+      downpipePositions.forEach(px => {
+        const elbow = createBox(0.10, 0.08, 0.45, gutterMat, pitchedRoofGroup);
+        elbow.position.set(px, gutterY - 0.04, -3.65);
+
+        const pipe = createBox(0.10, pipeH, 0.10, gutterMat, pitchedRoofGroup);
+        pipe.position.set(px, 0.20 + pipeH / 2, -3.425 - 0.08);
+
+        const shoe = createBox(0.10, 0.12, 0.15, gutterMat, pitchedRoofGroup);
+        shoe.position.set(px, 0.26, -3.425 - 0.15);
+      });
+    }
+    buildRoofCovering();
 
     // Dimension Lines (Строго по рабочему чертежу КК-1895-АС-01)
     const dimLineMaterials = [];
@@ -2136,10 +2358,10 @@
       createDimLine([-9.7, 0.50, -3.6], [-9.7, 2.80, -3.6], "2.30 м (Кладка стен)", 0xe2e8f0);
       createDimLine([-9.7, 2.80, -3.6], [-9.7, 3.20, -3.6], "0.40 м (Ригели 40×38 см)", 0xa855f7);
       createDimLine([-9.7, 3.20, -3.6], [-9.7, 3.42, -3.6], "0.22 м (Плиты ПК)", 0x10b981);
-      createDimLine([-9.7, 3.42, -3.6], [-9.7, 4.17, -3.6], "0.75 м (Парапет)", 0x38bdf8);
-
-      createDimLine([0, 3.5, -3.425], [0, 3.5, -4.425], "1.00 м (Вылет кровли назад)", 0x10b981);
-      createDimLine([5.275, 3.55, -2.425], [9.275, 3.55, -2.425], "3.85 × 1.22 м (Проём лестницы)", 0xf59e0b);
+      createDimLine([-9.7, 3.42, -3.6], [-9.7, 4.32, -3.6], "0.90 м (Парапет)", 0x38bdf8);
+      createDimLine([0, 3.5, -3.425], [0, 3.5, -3.925], "0.50 м (Вылет кровли назад)", 0x10b981);
+      createDimLine([0.0, 3.85, -0.2], [0.8, 3.85, -0.2], "0.80 м (Шаг стропил 35×140)", 0xf59e0b);
+      createDimLine([5.275, 3.55, -2.425], [9.275, 3.55, -2.425], "3.85 × 1.22 м (Временный настил лестницы)", 0xf59e0b);
       createDimLine([7.275, 3.55, -1.8], [7.275, 3.55, 3.0], "4 плиты 40-12 (Беседка)", 0x38bdf8);
       createDimLine([-9.10, 3.55, 0], [4.80, 3.55, 0], "10 плит 64-12 + 5 монолитных стяжек", 0x38bdf8);
     }
@@ -2256,6 +2478,8 @@
       if (layer === 'plinths') plinthsGroup.visible = visible;
       if (layer === 'floors') floorsGroup.visible = visible;
       if (layer === 'roof') pitchedRoofGroup.visible = visible;
+      if (layer === 'rafters') raftersGroup.visible = visible;
+      if (layer === 'insulation') insulationGroup.visible = visible;
       if (layer === 'parapet') parapetGroup.visible = visible;
       if (layer === 'slabs') slabsGroup.visible = visible;
       if (layer === 'walls') wallsGroup.visible = visible;
@@ -2818,6 +3042,21 @@
       const chkP = document.getElementById('toggle-parapet');
       if (chkP) chkP.checked = true;
       toggleLayer('parapet', true);
+    }
+    if (urlParams.get('roof') === '1') {
+      const chk = document.getElementById('toggle-roof');
+      if (chk) chk.checked = true;
+      toggleLayer('roof', true);
+    }
+    if (urlParams.get('rafters') === '1') {
+      const chk = document.getElementById('toggle-rafters');
+      if (chk) chk.checked = true;
+      toggleLayer('rafters', true);
+    }
+    if (urlParams.get('insulation') === '1') {
+      const chk = document.getElementById('toggle-insulation');
+      if (chk) chk.checked = true;
+      toggleLayer('insulation', true);
     }
     if (urlParams.get('open') === '1') {
       isOpeningsOpen = true;
