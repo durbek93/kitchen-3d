@@ -829,7 +829,7 @@
           <input type="range" min="0" max="100" value="0" class="range-slider" id="openings-slider" oninput="setOpeningsSlider(this.value)">
         </div>
         <div style="font-size: 10.5px; color: var(--text-muted); line-height: 1.4; margin-top: 2px;">
-          💡 Дверь с/у распахивается внутрь, створки портала ВП-1 съезжают за витражи, форточка и окна откидываются. Можно кликать по ним в 3D!
+          💡 Портал ВП-1 и окна распахиваются внутрь помещений (чистый проход 1.90 м без центральной стойки), форточка откидывается. Можно кликать по створкам в 3D!
         </div>
       </div>
 
@@ -1646,8 +1646,8 @@
       animOpenings.push({
         type: 'window',
         update: (t) => {
-          const rotDir = z > 0 ? 1 : -1;
-          sashGroup.rotation.y = rotDir * t * (Math.PI / 4.2); // ~43 градуса внутрь
+          const rotDir = z > 0 ? -1 : 1; // Распахивание строго ВНУТРЬ помещений
+          sashGroup.rotation.y = rotDir * t * (Math.PI / 3.2); // ~56 градусов внутрь
         }
       });
       clickableOpenings.push(sashGroup);
@@ -1765,77 +1765,167 @@
     }
 
     function build4SectionVitraj(x, zCenter, totalWidth, height) {
-      const secW = totalWidth / 4;
+      // Витражный портал ВП-1 (4.05 × 2.30 м) между беседкой (X > 5.275) и зимней кухней (X < 5.275)
+      // Конструкция: 2 боковые глухие секции по 1.05 м + 2 распашные штульповые двери по 0.95 м внутрь кухни (чистый сквозной проём 1.90 м без центрального импоста!)
       const vitY = PLINTH_H + height / 2;
-      const fProf = 0.06;
-      const fDepth = 0.10;
+      const fProf = 0.06;  // Профиль наружной коробки 6 см
+      const fDepth = 0.10; // Глубина коробки 10 см
+      const sideW = 1.05;  // Ширина боковых глухих секций
 
-      // Верхняя и нижняя балки рамы
+      // 1. Неподвижная наружная П-образная коробка и порог
+      // Верхняя балка рамы
       const fTop = createBox(fDepth, fProf, totalWidth, frameMat, glassGroup);
       fTop.position.set(x, vitY + height / 2 - fProf / 2, zCenter);
 
+      // Нижний порог
       const fBot = createBox(fDepth, fProf, totalWidth, frameMat, glassGroup);
       fBot.position.set(x, vitY - height / 2 + fProf / 2, zCenter);
 
-      // Вертикальные стойки
-      for (let i = 0; i <= 4; i++) {
-        const postZ = zCenter - totalWidth / 2 + i * secW;
-        const post = createBox(fDepth, height - fProf * 2, 0.045, frameMat, glassGroup);
-        post.position.set(x, vitY, postZ);
-      }
+      // Крайняя задняя пристенная стойка (у кирпичного пилона Z = -2.025)
+      const postBack = createBox(fDepth, height - fProf * 2, fProf, frameMat, glassGroup);
+      postBack.position.set(x, vitY, zCenter - totalWidth / 2 + fProf / 2);
 
-      // Секция 0 (задняя крайняя): Глухой витраж
-      const glass0 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, glassGroup, false, false);
-      glass0.position.set(x, vitY, zCenter - 1.5 * secW);
+      // Крайняя передняя пристенная стойка (у кирпичного пилона Z = +2.025)
+      const postFront = createBox(fDepth, height - fProf * 2, fProf, frameMat, glassGroup);
+      postFront.position.set(x, vitY, zCenter + totalWidth / 2 - fProf / 2);
 
-      // Секция 3 (передняя крайняя): Глухой витраж
-      const glass3 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, glassGroup, false, false);
-      glass3.position.set(x, vitY, zCenter + 1.5 * secW);
+      // Промежуточный задний импост (отделяет глухую заднюю секцию от проёма дверей)
+      const mProf = 0.05; // 5 см профиль импоста
+      const mullionZBack = zCenter - totalWidth / 2 + sideW; // -0.975 м
+      const mullionBack = createBox(fDepth, height - fProf * 2, mProf, frameMat, glassGroup);
+      mullionBack.position.set(x, vitY, mullionZBack);
 
-      // Секция 1: Раздвижная створка (левая)
-      const slideLeftGroup = new THREE.Group();
-      const initialZLeft = zCenter - 0.5 * secW;
-      slideLeftGroup.position.set(x - 0.02, vitY, initialZLeft);
-      glassGroup.add(slideLeftGroup);
+      // Промежуточный передний импост (отделяет глухую переднюю секцию от проёма дверей)
+      const mullionZFront = zCenter + totalWidth / 2 - sideW; // +0.975 м
+      const mullionFront = createBox(fDepth, height - fProf * 2, mProf, frameMat, glassGroup);
+      mullionFront.position.set(x, vitY, mullionZFront);
 
-      const glass1 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, slideLeftGroup, false, false);
-      glass1.position.set(0, 0, 0);
+      // ВАЖНО: В центральном проёме между mullionBack и mullionFront (Z от -0.950 до +0.950)
+      // ЦЕНТРАЛЬНАЯ СТОЙКА ОТСУТСТВУЕТ ПОЛНОСТЬЮ! При открытии дверей образуется чистый сквозной проём 1.90 м.
 
-      const frame1L = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideLeftGroup);
-      frame1L.position.set(0, 0, -(secW - 0.06) / 2);
-      const frame1R = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideLeftGroup);
-      frame1R.position.set(0, 0, (secW - 0.06) / 2);
+      // 2. Глухие боковые секции
+      const fixPaneW = sideW - fProf - mProf / 2; // ~0.965 м
+      const fixPaneH = height - fProf * 2;
+      const fixGlassH = fixPaneH - 0.04;
+      const fixGlassW = fixPaneW - 0.04;
 
-      const handle1 = createBox(0.07, 0.45, 0.03, handleMat, slideLeftGroup);
-      handle1.position.set(0.03, -0.15, (secW - 0.06) / 2 - 0.05);
+      // Задний глухой витраж
+      const fixZBack = (zCenter - totalWidth / 2 + fProf + mullionZBack - mProf / 2) / 2;
+      const glassFixBack = createBox(0.015, fixGlassH, fixGlassW, glassMat, glassGroup, false, false);
+      glassFixBack.position.set(x, vitY, fixZBack);
 
-      // Секция 2: Раздвижная створка (правая)
-      const slideRightGroup = new THREE.Group();
-      const initialZRight = zCenter + 0.5 * secW;
-      slideRightGroup.position.set(x + 0.02, vitY, initialZRight);
-      glassGroup.add(slideRightGroup);
+      // Передний глухой витраж
+      const fixZFront = (mullionZFront + mProf / 2 + zCenter + totalWidth / 2 - fProf) / 2;
+      const glassFixFront = createBox(0.015, fixGlassH, fixGlassW, glassMat, glassGroup, false, false);
+      glassFixFront.position.set(x, vitY, fixZFront);
 
-      const glass2 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, slideRightGroup, false, false);
-      glass2.position.set(0, 0, 0);
+      // 3. Центральные распашные штульповые двери (открывание ВНУТРЬ зимней кухни, в сторону -X)
+      const doorOpenW = (mullionZFront - mProf / 2) - (mullionZBack + mProf / 2); // 1.90 м
+      const leafW = doorOpenW / 2; // 0.95 м ширина створки
+      const leafH = height - fProf * 2 - 0.015; // 2.165 м высота створки
+      const sProf = 0.075; // 7.5 см профиль створки
+      const sDepth = 0.065; // 6.5 см толщина створки
 
-      const frame2L = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideRightGroup);
-      frame2L.position.set(0, 0, -(secW - 0.06) / 2);
-      const frame2R = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideRightGroup);
-      frame2R.position.set(0, 0, (secW - 0.06) / 2);
+      // --- Задняя створка дверей (петли на заднем импосте mullionZBack + mProf/2 = -0.950 м) ---
+      const hingeZBack = mullionZBack + mProf / 2;
+      const hingeX = x - 0.035; // петли с внутренней стороны (со стороны зимней кухни)
+      const doorBackGroup = new THREE.Group();
+      doorBackGroup.position.set(hingeX, vitY, hingeZBack);
+      glassGroup.add(doorBackGroup);
 
-      const handle2 = createBox(0.07, 0.45, 0.03, handleMat, slideRightGroup);
-      handle2.position.set(0.03, -0.15, -(secW - 0.06) / 2 + 0.05);
+      // Профиль рамы задней створки (в локальных координатах: створка идёт от Z=0 до Z=+leafW)
+      const sashCenterZBack = leafW / 2;
+      const sashCenterX = 0.035; // в закрытом состоянии створка выравнивается по центру проёма X=x
 
-      const slideDist = secW * 0.90; // ход сдвига ~90 см
+      // Верхняя и нижняя перекладины створки
+      const bTopRail = createBox(sDepth, sProf, leafW, frameMat, doorBackGroup);
+      bTopRail.position.set(sashCenterX, leafH / 2 - sProf / 2, sashCenterZBack);
 
+      const bBotRail = createBox(sDepth, sProf * 1.5, leafW, frameMat, doorBackGroup);
+      bBotRail.position.set(sashCenterX, -leafH / 2 + (sProf * 1.5) / 2, sashCenterZBack);
+
+      // Вертикальные стойки створки (петлевая и притворная)
+      const bHingeStile = createBox(sDepth, leafH, sProf, frameMat, doorBackGroup);
+      bHingeStile.position.set(sashCenterX, 0, sProf / 2);
+
+      const bMeetingStile = createBox(sDepth, leafH, sProf, frameMat, doorBackGroup);
+      bMeetingStile.position.set(sashCenterX, 0, leafW - sProf / 2);
+
+      // Стеклопакет створки
+      const bGlassW = leafW - sProf * 2;
+      const bGlassH = leafH - sProf * 2.5;
+      const bGlass = createBox(0.015, bGlassH, bGlassW, glassMat, doorBackGroup, false, false);
+      bGlass.position.set(sashCenterX, (sProf * 0.5) / 2, sashCenterZBack);
+
+      // Петли задней створки
+      [-0.85, 0, 0.85].forEach(yOffset => {
+        const hg = createBox(0.03, 0.10, 0.025, frameMat, doorBackGroup);
+        hg.position.set(0.0, yOffset, 0.015);
+      });
+
+      // Ручка задней створки (со стороны кухни и со стороны беседки)
+      const bHndIn = createBox(0.045, 0.02, 0.12, handleMat, doorBackGroup);
+      bHndIn.position.set(sashCenterX - sDepth / 2 - 0.025, -0.10, leafW - 0.08);
+
+      const bHndOut = createBox(0.045, 0.02, 0.12, handleMat, doorBackGroup);
+      bHndOut.position.set(sashCenterX + sDepth / 2 + 0.025, -0.10, leafW - 0.08);
+
+      // --- Передняя створка дверей (петли на переднем импосте mullionZFront - mProf/2 = +0.950 м) ---
+      const hingeZFront = mullionZFront - mProf / 2;
+      const doorFrontGroup = new THREE.Group();
+      doorFrontGroup.position.set(hingeX, vitY, hingeZFront);
+      glassGroup.add(doorFrontGroup);
+
+      // В локальных координатах: створка идёт от Z=0 до Z=-leafW
+      const sashCenterZFront = -leafW / 2;
+
+      // Верхняя и нижняя перекладины створки
+      const fTopRail = createBox(sDepth, sProf, leafW, frameMat, doorFrontGroup);
+      fTopRail.position.set(sashCenterX, leafH / 2 - sProf / 2, sashCenterZFront);
+
+      const fBotRail = createBox(sDepth, sProf * 1.5, leafW, frameMat, doorFrontGroup);
+      fBotRail.position.set(sashCenterX, -leafH / 2 + (sProf * 1.5) / 2, sashCenterZFront);
+
+      // Вертикальные стойки створки (петлевая и притворная)
+      const fHingeStile = createBox(sDepth, leafH, sProf, frameMat, doorFrontGroup);
+      fHingeStile.position.set(sashCenterX, 0, -sProf / 2);
+
+      const fMeetingStile = createBox(sDepth, leafH, sProf, frameMat, doorFrontGroup);
+      fMeetingStile.position.set(sashCenterX, 0, -leafW + sProf / 2);
+
+      // Стеклопакет створки
+      const fGlass = createBox(0.015, bGlassH, bGlassW, glassMat, doorFrontGroup, false, false);
+      fGlass.position.set(sashCenterX, (sProf * 0.5) / 2, sashCenterZFront);
+
+      // Штульповая нащельная планка на стыке створок
+      const stulpTrim = createBox(0.025, leafH, 0.03, frameMat, doorFrontGroup);
+      stulpTrim.position.set(sashCenterX, 0, -leafW - 0.012);
+
+      // Петли передней створки
+      [-0.85, 0, 0.85].forEach(yOffset => {
+        const hg = createBox(0.03, 0.10, 0.025, frameMat, doorFrontGroup);
+        hg.position.set(0.0, yOffset, -0.015);
+      });
+
+      // Ручка передней створки
+      const fHndIn = createBox(0.045, 0.02, 0.12, handleMat, doorFrontGroup);
+      fHndIn.position.set(sashCenterX - sDepth / 2 - 0.025, -0.10, -leafW + 0.08);
+
+      const fHndOut = createBox(0.045, 0.02, 0.12, handleMat, doorFrontGroup);
+      fHndOut.position.set(sashCenterX + sDepth / 2 + 0.025, -0.10, -leafW + 0.08);
+
+      // Анимация открывания: обе створки распахиваются ВНУТРЬ зимней кухни
+      // Задняя створка (Z in [0, +leafW]) поворачивается на -angle
+      // Передняя створка (Z in [-leafW, 0]) поворачивается на +angle
       animOpenings.push({
         type: 'vitraj',
         update: (t) => {
-          slideLeftGroup.position.z = initialZLeft - t * slideDist;
-          slideRightGroup.position.z = initialZRight + t * slideDist;
+          const swingAngle = t * (Math.PI * 0.46); // ~83 градуса внутрь кухни
+          doorBackGroup.rotation.y = -swingAngle;
+          doorFrontGroup.rotation.y = swingAngle;
         }
       });
-      clickableOpenings.push(slideLeftGroup, slideRightGroup);
+      clickableOpenings.push(doorBackGroup, doorFrontGroup);
     }
 
     // Concrete Ceiling Slabs (18.95 × 6.85 м: 10 плит 64-12 + 5 монолитных стяжек + 4 плиты 40-12)
@@ -2709,6 +2799,15 @@
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('view')) {
       setView(urlParams.get('view'), false);
+    }
+    if (urlParams.has('cam')) {
+      const c = urlParams.get('cam').split(',').map(Number);
+      if (c.length >= 3) camera.position.set(c[0], c[1], c[2]);
+    }
+    if (urlParams.has('target')) {
+      const t = urlParams.get('target').split(',').map(Number);
+      if (t.length >= 3) controls.target.set(t[0], t[1], t[2]);
+      controls.update();
     }
     if (urlParams.get('slabs') === '1') {
       const chkS = document.getElementById('toggle-slabs');
