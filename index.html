@@ -550,6 +550,68 @@
         </div>
       </div>
 
+      <!-- СЕКЦИЯ: ДВЕРИ И ОКНА -->
+      <div class="panel-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span class="panel-title" style="margin-bottom: 0;">🚪 Двери и окна</span>
+          <button id="btn-toggle-openings" class="btn-seg" style="flex: none; padding: 4px 12px; font-size: 11px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;" onclick="toggleOpenings()">
+            🔒 Закрыты
+          </button>
+        </div>
+
+        <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+          <div style="display: flex; justify-content: space-between; width: 100%;">
+            <span>Степень открытия створок</span>
+            <span id="openings-val" style="font-weight: 700; color: var(--primary);">0%</span>
+          </div>
+          <input type="range" min="0" max="100" value="0" class="range-slider" id="openings-slider" oninput="setOpeningsSlider(this.value)">
+        </div>
+        <div style="font-size: 10.5px; color: var(--text-muted); line-height: 1.4; margin-top: 2px;">
+          💡 Дверь с/у распахивается внутрь, створки портала ВП-1 съезжают за витражи, форточка и окна откидываются. Можно кликать по ним в 3D!
+        </div>
+      </div>
+
+      <!-- СЕКЦИЯ: СОЛНЦЕ И ИНСОЛЯЦИЯ -->
+      <div class="panel-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span class="panel-title" style="margin-bottom: 0;">☀️ Солнце и инсоляция</span>
+          <span id="sun-time-display" style="font-size: 13px; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.35);">
+            13:00
+          </span>
+        </div>
+
+        <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+          <div style="display: flex; justify-content: space-between; width: 100%; font-size: 10px; color: var(--text-muted);">
+            <span>06:00 (Рассвет)</span>
+            <span>13:00 (Полдень)</span>
+            <span>21:00 (Закат)</span>
+          </div>
+          <input type="range" min="6" max="21" step="0.1" value="13" class="range-slider" id="sun-slider" oninput="setSunTimeFromSlider(this.value)">
+        </div>
+
+        <div id="sun-desc-display" style="font-size: 10.5px; color: #94a3b8; line-height: 1.4; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 2px solid #f59e0b; margin-bottom: 8px;">
+          ☀️ Полдень: солнце в зените на Юге, короткие тени под навесом
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
+          <button type="button" class="btn-seg" id="sun-btn-8" onclick="setSunPreset(8.0)">🌅 Утро (08:00)</button>
+          <button type="button" class="btn-seg active" id="sun-btn-13" onclick="setSunPreset(13.0)">☀️ Полдень (13:00)</button>
+          <button type="button" class="btn-seg" id="sun-btn-18" onclick="setSunPreset(18.5)">🌇 Закат (18:30)</button>
+          <button type="button" class="btn-seg" id="sun-btn-20" onclick="setSunPreset(20.5)">🌙 Вечер (20:30)</button>
+        </div>
+
+        <button id="btn-sun-play" class="btn-action btn-secondary" onclick="toggleSunAnimation()" style="width: 100%; font-size: 11.5px; padding: 8px 10px;">
+          ▶ Запустить день (движение теней)
+        </button>
+
+        <div style="margin-top: 8px; padding: 6px 8px; background: rgba(15, 23, 42, 0.6); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); font-size: 9.5px; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+          <div><strong style="color: #38bdf8;">ЮГ (Фасад):</strong> Двор и витражи</div>
+          <div><strong style="color: #64748b;">СЕВЕР:</strong> Глухая задняя стена</div>
+          <div><strong style="color: #f59e0b;">ВОСТОК:</strong> Беседка (рассвет)</div>
+          <div><strong style="color: #f97316;">ЗАПАД:</strong> Летняя кухня (закат)</div>
+        </div>
+      </div>
+
       <div class="panel-section">
         <span class="panel-title">Экспликация помещений</span>
         <div class="stats-grid">
@@ -687,18 +749,20 @@
     scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.55);
-    sunLight.position.set(25, 35, 20);
+    sunLight.position.set(0, 42, 35);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 80;
-    sunLight.shadow.camera.left = -22;
-    sunLight.shadow.camera.right = 22;
-    sunLight.shadow.camera.top = 22;
-    sunLight.shadow.camera.bottom = -22;
-    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.camera.far = 140;
+    sunLight.shadow.camera.left = -26;
+    sunLight.shadow.camera.right = 26;
+    sunLight.shadow.camera.top = 26;
+    sunLight.shadow.camera.bottom = -26;
+    sunLight.shadow.bias = -0.0004;
+    sunLight.shadow.normalBias = 0.02;
     scene.add(sunLight);
+    scene.add(sunLight.target);
 
     const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.65);
     fillLight.position.set(-20, 20, -20);
@@ -909,6 +973,13 @@
     parapetGroup.visible = false;
     slabsGroup.visible = false;
     pitchedRoofGroup.visible = false;
+
+    // Реестры интерактивных открывающихся проёмов (двери, окна, форточка, витраж)
+    const animOpenings = [];
+    const clickableOpenings = [];
+    let openingsProgress = 0.0;
+    let targetOpeningsProgress = 0.0;
+    let isOpeningsOpen = false;
 
     function createBox(w, h, d, mat, group, castShadow = true, receiveShadow = true) {
       const geom = new THREE.BoxGeometry(w, h, d);
@@ -1230,6 +1301,7 @@
       const fProf = 0.055;
       const fDepth = 0.08;
 
+      // Outer fixed frame
       const fTop = createBox(w, fProf, fDepth, frameMat, glassGroup);
       fTop.position.set(x, winY + h / 2 - fProf / 2, z);
 
@@ -1242,18 +1314,58 @@
       const fRight = createBox(fProf, h - fProf * 2, fDepth, frameMat, glassGroup);
       fRight.position.set(x + w / 2 - fProf / 2, winY, z);
 
-      const fMid = createBox(0.035, h - fProf * 2, fDepth, frameMat, glassGroup);
+      const fMid = createBox(0.04, h - fProf * 2, fDepth, frameMat, glassGroup);
       fMid.position.set(x, winY, z);
 
-      const glass = createBox(w - fProf * 2, h - fProf * 2, 0.012, glassMat, glassGroup, false, false);
-      glass.position.set(x, winY, z);
+      // Left pane (глухая створка)
+      const paneW = (w - fProf * 2 - 0.04) / 2;
+      const paneH = h - fProf * 2;
+      const glassLeft = createBox(paneW, paneH, 0.012, glassMat, glassGroup, false, false);
+      glassLeft.position.set(x - paneW / 2 - 0.02, winY, z);
+
+      // Right pane (поворотная открывающаяся створка)
+      // Петля на правом профиле рамы
+      const sashGroup = new THREE.Group();
+      sashGroup.position.set(x + w / 2 - fProf, winY, z);
+      glassGroup.add(sashGroup);
+
+      const sashGlass = createBox(paneW - 0.04, paneH - 0.04, 0.012, glassMat, sashGroup, false, false);
+      sashGlass.position.set(-paneW / 2, 0, 0);
+
+      const sFrameTop = createBox(paneW, 0.04, 0.06, frameMat, sashGroup);
+      sFrameTop.position.set(-paneW / 2, paneH / 2 - 0.02, 0);
+
+      const sFrameBot = createBox(paneW, 0.04, 0.06, frameMat, sashGroup);
+      sFrameBot.position.set(-paneW / 2, -paneH / 2 + 0.02, 0);
+
+      const sFrameLeft = createBox(0.04, paneH, 0.06, frameMat, sashGroup);
+      sFrameLeft.position.set(-paneW + 0.02, 0, 0);
+
+      const sFrameRight = createBox(0.04, paneH, 0.06, frameMat, sashGroup);
+      sFrameRight.position.set(-0.02, 0, 0);
+
+      // Оконная ручка на створке
+      const winHnd = createBox(0.02, 0.12, 0.045, handleMat, sashGroup);
+      const hndZOffset = z > 0 ? -0.035 : 0.035;
+      winHnd.position.set(-paneW + 0.045, -0.05, hndZOffset);
+
+      animOpenings.push({
+        type: 'window',
+        update: (t) => {
+          const rotDir = z > 0 ? 1 : -1;
+          sashGroup.rotation.y = rotDir * t * (Math.PI / 4.2); // ~43 градуса внутрь
+        }
+      });
+      clickableOpenings.push(sashGroup);
     }
 
     function buildTransomWindow(x, z, w, h) {
-      const winY = PLINTH_H + 1.60 + h / 2;
+      // ИСПРАВЛЕНИЕ: Низ рамы строго на высоте верха подоконной кладки (PLINTH_H + 1.50)
+      const winY = PLINTH_H + 1.50 + h / 2;
       const fProf = 0.045;
       const fDepth = 0.08;
 
+      // Неподвижная наружная коробка (без зазоров в кирпичном проёме)
       const fTop = createBox(fDepth, fProf, w, frameMat, glassGroup);
       fTop.position.set(x, winY + h / 2 - fProf / 2, z);
 
@@ -1266,37 +1378,95 @@
       const fSide2 = createBox(fDepth, h - fProf * 2, fProf, frameMat, glassGroup);
       fSide2.position.set(x, winY, z + w / 2 - fProf / 2);
 
-      const glass = createBox(0.012, h - fProf * 2, w - fProf * 2, glassMat, glassGroup, false, false);
-      glass.position.set(x, winY, z);
+      // Откидная створка фрамуги (петли по верхней грани)
+      const sashGroup = new THREE.Group();
+      sashGroup.position.set(x, winY + h / 2 - fProf, z);
+      glassGroup.add(sashGroup);
+
+      const sW = w - fProf * 2 - 0.01;
+      const sH = h - fProf * 2 - 0.01;
+      const sProf = 0.035;
+      const sashCenterY = -sH / 2;
+
+      const sGlass = createBox(0.012, sH - sProf * 2, sW - sProf * 2, glassMat, sashGroup, false, false);
+      sGlass.position.set(0, sashCenterY, 0);
+
+      const sTopF = createBox(0.05, sProf, sW, frameMat, sashGroup);
+      sTopF.position.set(0, -sProf / 2, 0);
+
+      const sBotF = createBox(0.05, sProf, sW, frameMat, sashGroup);
+      sBotF.position.set(0, -sH + sProf / 2, 0);
+
+      const sSideF1 = createBox(0.05, sH, sProf, frameMat, sashGroup);
+      sSideF1.position.set(0, sashCenterY, -sW / 2 + sProf / 2);
+
+      const sSideF2 = createBox(0.05, sH, sProf, frameMat, sashGroup);
+      sSideF2.position.set(0, sashCenterY, sW / 2 - sProf / 2);
+
+      // Ручка фрамуги снизу
+      const sHnd = createBox(0.04, 0.06, 0.025, handleMat, sashGroup);
+      sHnd.position.set(0.03, -sH + 0.04, 0);
+
+      animOpenings.push({
+        type: 'transom',
+        update: (t) => {
+          sashGroup.rotation.z = t * (Math.PI / 6); // откидывание на 30 градусов
+        }
+      });
+      clickableOpenings.push(sashGroup);
     }
 
     function buildDoorway(x, z, w, h, isTransverse) {
       const doorY = PLINTH_H + h / 2;
-      const fProf = 0.05; // 5 cm frame face width
-      const fDepth = 0.38; // full 38 cm wall thickness: clean, solid fit!
+      const fProf = 0.05; // 5 см профиль коробки
+      const fDepth = 0.38; // толщина коробки на всю стену 38 см
 
       if (isTransverse) {
-        // Left jamb
+        // Левый и правый косяки + перемычка коробки
         const jamb1 = createBox(fDepth, h, fProf, frameMat, glassGroup);
         jamb1.position.set(x, doorY, z - w / 2 + fProf / 2);
 
-        // Right jamb
         const jamb2 = createBox(fDepth, h, fProf, frameMat, glassGroup);
         jamb2.position.set(x, doorY, z + w / 2 - fProf / 2);
 
-        // Top head
         const head = createBox(fDepth, fProf, w, frameMat, glassGroup);
         head.position.set(x, doorY + h / 2 - fProf / 2, z);
 
-        // Open door leaf swung into the utility room (leaving sightline open!)
-        const leafW = w - 0.08;
-        const leafH = h - 0.06;
-        const leaf = createBox(0.04, leafH, leafW, doorLeafMat, glassGroup);
-        leaf.position.set(x - 0.28, doorY, z - 0.15);
-        leaf.rotation.y = -Math.PI / 3.0;
+        // ИСПРАВЛЕНИЕ: Единая шарнирная группа двери (петли на левом косяке Z = z - w/2 + fProf)
+        const hingeZ = z - w / 2 + fProf;
+        const doorHingeGroup = new THREE.Group();
+        doorHingeGroup.position.set(x, doorY, hingeZ);
+        glassGroup.add(doorHingeGroup);
 
-        const hnd = createBox(0.06, 0.12, 0.03, handleMat, glassGroup);
-        hnd.position.set(x - 0.45, doorY, z + 0.10);
+        const leafW = w - fProf * 2;
+        const leafH = h - fProf;
+        const leafThick = 0.04;
+
+        // Полотно двери (смещено от петли на leafW / 2 вдоль Z)
+        const leaf = createBox(leafThick, leafH, leafW, doorLeafMat, doorHingeGroup);
+        leaf.position.set(0, 0, leafW / 2);
+
+        // Ручки жестко привязаны к полотну двери:
+        // Сторона кухни (+X):
+        const hPlate1 = createBox(0.008, 0.16, 0.035, handleMat, doorHingeGroup);
+        hPlate1.position.set(leafThick / 2 + 0.004, -0.05, leafW - 0.08);
+        const hLever1 = createBox(0.045, 0.018, 0.11, handleMat, doorHingeGroup);
+        hLever1.position.set(leafThick / 2 + 0.025, -0.02, leafW - 0.08 - 0.03);
+
+        // Сторона санузла (-X):
+        const hPlate2 = createBox(0.008, 0.16, 0.035, handleMat, doorHingeGroup);
+        hPlate2.position.set(-leafThick / 2 - 0.004, -0.05, leafW - 0.08);
+        const hLever2 = createBox(0.045, 0.018, 0.11, handleMat, doorHingeGroup);
+        hLever2.position.set(-leafThick / 2 - 0.025, -0.02, leafW - 0.08 - 0.03);
+
+        animOpenings.push({
+          type: 'door',
+          update: (t) => {
+            // Распахивается внутрь санузла на ~78 градусов
+            doorHingeGroup.rotation.y = -t * (Math.PI * 0.43);
+          }
+        });
+        clickableOpenings.push(doorHingeGroup);
       }
     }
 
@@ -1306,31 +1476,72 @@
       const fProf = 0.06;
       const fDepth = 0.10;
 
+      // Верхняя и нижняя балки рамы
       const fTop = createBox(fDepth, fProf, totalWidth, frameMat, glassGroup);
       fTop.position.set(x, vitY + height / 2 - fProf / 2, zCenter);
 
       const fBot = createBox(fDepth, fProf, totalWidth, frameMat, glassGroup);
       fBot.position.set(x, vitY - height / 2 + fProf / 2, zCenter);
 
+      // Вертикальные стойки
       for (let i = 0; i <= 4; i++) {
         const postZ = zCenter - totalWidth / 2 + i * secW;
         const post = createBox(fDepth, height - fProf * 2, 0.045, frameMat, glassGroup);
         post.position.set(x, vitY, postZ);
       }
 
-      const centers = [-1.5 * secW, -0.5 * secW, 0.5 * secW, 1.5 * secW];
-      centers.forEach((zOffset, idx) => {
-        const glass = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, glassGroup, false, false);
-        glass.position.set(x, vitY, zCenter + zOffset);
+      // Секция 0 (задняя крайняя): Глухой витраж
+      const glass0 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, glassGroup, false, false);
+      glass0.position.set(x, vitY, zCenter - 1.5 * secW);
 
-        if (idx === 1) {
-          const handle = createBox(0.07, 0.45, 0.03, handleMat, glassGroup);
-          handle.position.set(x + 0.05, vitY - 0.15, zCenter - 0.06);
-        } else if (idx === 2) {
-          const handle = createBox(0.07, 0.45, 0.03, handleMat, glassGroup);
-          handle.position.set(x + 0.05, vitY - 0.15, zCenter + 0.06);
+      // Секция 3 (передняя крайняя): Глухой витраж
+      const glass3 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, glassGroup, false, false);
+      glass3.position.set(x, vitY, zCenter + 1.5 * secW);
+
+      // Секция 1: Раздвижная створка (левая)
+      const slideLeftGroup = new THREE.Group();
+      const initialZLeft = zCenter - 0.5 * secW;
+      slideLeftGroup.position.set(x - 0.02, vitY, initialZLeft);
+      glassGroup.add(slideLeftGroup);
+
+      const glass1 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, slideLeftGroup, false, false);
+      glass1.position.set(0, 0, 0);
+
+      const frame1L = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideLeftGroup);
+      frame1L.position.set(0, 0, -(secW - 0.06) / 2);
+      const frame1R = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideLeftGroup);
+      frame1R.position.set(0, 0, (secW - 0.06) / 2);
+
+      const handle1 = createBox(0.07, 0.45, 0.03, handleMat, slideLeftGroup);
+      handle1.position.set(0.03, -0.15, (secW - 0.06) / 2 - 0.05);
+
+      // Секция 2: Раздвижная створка (правая)
+      const slideRightGroup = new THREE.Group();
+      const initialZRight = zCenter + 0.5 * secW;
+      slideRightGroup.position.set(x + 0.02, vitY, initialZRight);
+      glassGroup.add(slideRightGroup);
+
+      const glass2 = createBox(0.015, height - fProf * 2 - 0.04, secW - 0.06, glassMat, slideRightGroup, false, false);
+      glass2.position.set(0, 0, 0);
+
+      const frame2L = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideRightGroup);
+      frame2L.position.set(0, 0, -(secW - 0.06) / 2);
+      const frame2R = createBox(0.04, height - fProf * 2 - 0.02, 0.035, frameMat, slideRightGroup);
+      frame2R.position.set(0, 0, (secW - 0.06) / 2);
+
+      const handle2 = createBox(0.07, 0.45, 0.03, handleMat, slideRightGroup);
+      handle2.position.set(0.03, -0.15, -(secW - 0.06) / 2 + 0.05);
+
+      const slideDist = secW * 0.90; // ход сдвига ~90 см
+
+      animOpenings.push({
+        type: 'vitraj',
+        update: (t) => {
+          slideLeftGroup.position.z = initialZLeft - t * slideDist;
+          slideRightGroup.position.z = initialZRight + t * slideDist;
         }
       });
+      clickableOpenings.push(slideLeftGroup, slideRightGroup);
     }
 
     // Concrete Ceiling Slabs (18.95 × 6.85 м: 10 плит 64-12 + 5 монолитных стяжек + 4 плиты 40-12)
@@ -1733,9 +1944,13 @@
       }
     }
 
-    function setView(view) {
+    function setView(view, animate = true) {
       document.querySelectorAll('.btn-view').forEach(b => b.classList.remove('active'));
-      if (event && event.target) event.target.classList.add('active');
+      try {
+        if (typeof event !== 'undefined' && event && event.target && event.target.classList) {
+          event.target.classList.add('active');
+        }
+      } catch (e) {}
 
       const target = new THREE.Vector3(0, 1.5, 0);
       let newPos = new THREE.Vector3();
@@ -1762,8 +1977,8 @@
           target.set(-7.075, 1.8, 1.05);
           break;
         case 'utility':
-          newPos.set(-7.5, 4.5, -8.5);
-          target.set(-7.075, 1.8, -2.075);
+          newPos.set(-4.0, 1.7, -2.075);
+          target.set(-9.285, 1.7, -2.075);
           break;
         case 'bottom':
           newPos.set(0, -22, 10);
@@ -1777,26 +1992,17 @@
           break;
       }
 
-      animateCamera(newPos, target);
+      if (animate) {
+        animateCamera(newPos, target);
+      } else {
+        camera.position.copy(newPos);
+        controls.target.copy(target);
+        controls.update();
+      }
     }
 
     function resetView() {
       setView('perspective');
-    }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('view')) {
-      setView(urlParams.get('view'));
-    }
-    if (urlParams.get('slabs') === '1') {
-      const chkS = document.getElementById('toggle-slabs');
-      if (chkS) chkS.checked = true;
-      toggleLayer('slabs', true);
-    }
-    if (urlParams.get('parapet') === '1') {
-      const chkP = document.getElementById('toggle-parapet');
-      if (chkP) chkP.checked = true;
-      toggleLayer('parapet', true);
     }
 
     function animateCamera(newPos, newTarget) {
@@ -1834,8 +2040,311 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
+    // ==========================================
+    // 3D КОМПАС И СТОРОНЫ СВЕТА НА ПЛОЩАДКЕ
+    // ==========================================
+    function build3DCompass() {
+      const compGroup = new THREE.Group();
+      compGroup.position.set(0, 0.03, 7.8); // 7.8 м перед зданием по центру двора
+      dimensionsGroup.add(compGroup);
+
+      // Внешнее круговое кольцо компаса (диаметр ~5 м)
+      const ringGeom = new THREE.RingGeometry(2.35, 2.45, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x475569, side: THREE.DoubleSide });
+      const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      compGroup.add(ringMesh);
+
+      // Внутреннее тонкое кольцо
+      const innerRingGeom = new THREE.RingGeometry(1.60, 1.63, 48);
+      const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x334155, side: THREE.DoubleSide });
+      const innerRing = new THREE.Mesh(innerRingGeom, innerRingMat);
+      innerRing.rotation.x = -Math.PI / 2;
+      compGroup.add(innerRing);
+
+      // Осевые направляющие линии
+      const lineMatNS = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 });
+      const lineMatEW = new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 });
+
+      // Ось Z (Север - Юг)
+      const geomNS = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0.01, -2.4),
+        new THREE.Vector3(0, 0.01, 2.4)
+      ]);
+      compGroup.add(new THREE.Line(geomNS, lineMatNS));
+
+      // Ось X (Запад - Восток)
+      const geomEW = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-2.4, 0.01, 0),
+        new THREE.Vector3(2.4, 0.01, 0)
+      ]);
+      compGroup.add(new THREE.Line(geomEW, lineMatEW));
+
+      // Стрелка ЮГ (+Z, к фасаду и зрителю)
+      const arrowSouthGeom = new THREE.ConeGeometry(0.22, 0.60, 4);
+      const arrowSouthMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+      const arrowSouth = new THREE.Mesh(arrowSouthGeom, arrowSouthMat);
+      arrowSouth.position.set(0, 0.01, 2.4);
+      arrowSouth.rotation.x = Math.PI / 2;
+      compGroup.add(arrowSouth);
+
+      // Стрелка СЕВЕР (-Z, к глухой задней стене)
+      const arrowNorthGeom = new THREE.ConeGeometry(0.18, 0.50, 4);
+      const arrowNorthMat = new THREE.MeshBasicMaterial({ color: 0x64748b });
+      const arrowNorth = new THREE.Mesh(arrowNorthGeom, arrowNorthMat);
+      arrowNorth.position.set(0, 0.01, -2.4);
+      arrowNorth.rotation.x = -Math.PI / 2;
+      compGroup.add(arrowNorth);
+
+      // Стрелка ВОСТОК (+X, к беседке)
+      const arrowEastGeom = new THREE.ConeGeometry(0.20, 0.55, 4);
+      const arrowEastMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+      const arrowEast = new THREE.Mesh(arrowEastGeom, arrowEastMat);
+      arrowEast.position.set(2.4, 0.01, 0);
+      arrowEast.rotation.z = -Math.PI / 2;
+      compGroup.add(arrowEast);
+
+      // Стрелка ЗАПАД (-X, к летней кухне)
+      const arrowWestGeom = new THREE.ConeGeometry(0.20, 0.55, 4);
+      const arrowWestMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+      const arrowWest = new THREE.Mesh(arrowWestGeom, arrowWestMat);
+      arrowWest.position.set(-2.4, 0.01, 0);
+      arrowWest.rotation.z = Math.PI / 2;
+      compGroup.add(arrowWest);
+
+      // 3D выноски сторон света
+      add3DLabel([0, 0.35, 10.7], "ЮГ: Фасад, двор и витражи", 0x38bdf8);
+      add3DLabel([0, 0.35, 4.9], "СЕВЕР: Задняя глухая стена", 0x64748b);
+      add3DLabel([3.3, 0.35, 7.8], "ВОСТОК: Беседка (рассвет)", 0xf59e0b);
+      add3DLabel([-3.3, 0.35, 7.8], "ЗАПАД: Летняя кухня (закат)", 0xf97316);
+    }
+    build3DCompass();
+
+    // ==========================================
+    // УПРАВЛЕНИЕ ДВЕРЯМИ И ОКНАМИ
+    // ==========================================
+    function toggleOpenings() {
+      isOpeningsOpen = !isOpeningsOpen;
+      targetOpeningsProgress = isOpeningsOpen ? 1.0 : 0.0;
+      updateOpeningsUI();
+    }
+
+    function setOpeningsSlider(val) {
+      targetOpeningsProgress = parseFloat(val) / 100.0;
+      isOpeningsOpen = targetOpeningsProgress > 0.05;
+      updateOpeningsUI();
+    }
+
+    function updateOpeningsUI() {
+      const btn = document.getElementById('btn-toggle-openings');
+      const valLabel = document.getElementById('openings-val');
+      const slider = document.getElementById('openings-slider');
+      if (btn) {
+        btn.textContent = isOpeningsOpen ? '🚪 Открыты' : '🔒 Закрыты';
+        btn.style.background = isOpeningsOpen ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.15)';
+        btn.style.borderColor = isOpeningsOpen ? 'rgba(16, 185, 129, 0.5)' : 'rgba(56, 189, 248, 0.4)';
+        btn.style.color = isOpeningsOpen ? '#34d399' : '#38bdf8';
+      }
+      if (valLabel) {
+        valLabel.textContent = `${Math.round(targetOpeningsProgress * 100)}%`;
+      }
+      if (slider) {
+        slider.value = Math.round(targetOpeningsProgress * 100);
+      }
+    }
+
+    // Интерактивный клик мышью по дверям и окнам
+    const raycaster = new THREE.Raycaster();
+    const mousePos = new THREE.Vector2();
+    let ptrDownX = 0, ptrDownY = 0;
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      ptrDownX = e.clientX;
+      ptrDownY = e.clientY;
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      const dist = Math.hypot(e.clientX - ptrDownX, e.clientY - ptrDownY);
+      if (dist > 6) return; // не клик, а перемещение камеры
+
+      mousePos.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mousePos.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mousePos, camera);
+
+      const hits = raycaster.intersectObjects(clickableOpenings, true);
+      if (hits.length > 0) {
+        toggleOpenings();
+      }
+    });
+
+    // ==========================================
+    // СИМУЛЯЦИЯ СОЛНЦА И ИНСОЛЯЦИИ
+    // ==========================================
+    let sunHour = 13.0; // 13:00 (Полдень)
+    let isSunPlaying = false;
+    let sunPlaySpeed = 0.025; // шаг прокрутки часов за кадр
+
+    function updateSun(hour, updateUI = true) {
+      sunHour = Math.max(6.0, Math.min(21.0, hour));
+
+      // Траектория движения солнца: Восток (+X) -> Юг (+Z) -> Запад (-X)
+      const t = (sunHour - 6.0) / (21.0 - 6.0); // 0.0 ... 1.0
+      const azimuth = Math.PI * (1.0 - t); // от PI (Восток) к 0 (Запад)
+
+      const noonFactor = Math.sin(t * Math.PI);
+      const elev = 0.12 + Math.pow(noonFactor, 0.75) * 1.05; // угол над горизонтом
+
+      const radius = 55.0;
+      const sunX = Math.cos(azimuth) * radius * Math.cos(elev);
+      const sunZ = Math.sin(azimuth) * radius * Math.cos(elev) * 0.70 + 8.0;
+      const sunY = Math.max(3.0, Math.sin(elev) * radius);
+
+      sunLight.position.set(sunX, sunY, sunZ);
+      sunLight.target.position.set(0, 1.2, 0);
+      sunLight.target.updateMatrixWorld();
+
+      // Освещение и цветовая температура атмосферы
+      let sunColor, ambientIntensity, sunIntensity;
+
+      if (sunHour < 7.5) {
+        // Утренний рассвет: теплый золотисто-оранжевый свет
+        const f = (sunHour - 6.0) / 1.5;
+        sunColor = new THREE.Color(0xff8c42).lerp(new THREE.Color(0xffd59e), f);
+        sunIntensity = 0.95 + f * 0.40;
+        ambientIntensity = 0.48 + f * 0.22;
+      } else if (sunHour > 18.5) {
+        // Вечер и закат: насыщенный оранжевый закат
+        const f = (21.0 - sunHour) / 2.5;
+        sunColor = new THREE.Color(0xff6b35).lerp(new THREE.Color(0xffcaa0), f);
+        sunIntensity = 0.35 + f * 1.0;
+        ambientIntensity = 0.38 + f * 0.32;
+      } else {
+        // Дневное солнце: яркий чистый белый свет
+        const f = Math.sin(((sunHour - 7.5) / 11.0) * Math.PI);
+        sunColor = new THREE.Color(0xfffaed).lerp(new THREE.Color(0xffffff), f);
+        sunIntensity = 1.35 + f * 0.35;
+        ambientIntensity = 0.70 + f * 0.15;
+      }
+
+      sunLight.color.copy(sunColor);
+      sunLight.intensity = sunIntensity;
+      ambientLight.intensity = ambientIntensity;
+
+      // Теплый интерьерный свет комнат усиливается утром и в сумерках
+      const intBoost = sunHour < 8.0 || sunHour > 18.0 ? 1.6 : 0.9;
+      intStudioLight1.intensity = 1.4 * intBoost;
+      intStudioLight2.intensity = 1.4 * intBoost;
+      intGazeboLight.intensity = 0.9 * intBoost;
+      intSummerLight.intensity = 0.9 * intBoost;
+      intUtilityLight.intensity = 1.1 * intBoost;
+
+      if (updateUI) {
+        const slider = document.getElementById('sun-slider');
+        if (slider) slider.value = sunHour;
+
+        const timeLabel = document.getElementById('sun-time-display');
+        const descLabel = document.getElementById('sun-desc-display');
+        if (timeLabel) {
+          const h = Math.floor(sunHour);
+          const m = Math.floor((sunHour - h) * 60);
+          timeLabel.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+        if (descLabel) {
+          if (sunHour <= 8.0) {
+            descLabel.textContent = '🌅 Утро: восход солнца над беседкой (Восток), длинные тени на запад';
+          } else if (sunHour <= 11.5) {
+            descLabel.textContent = '☀️ Первая половина дня: солнце заливает фасад и террасу';
+          } else if (sunHour <= 14.5) {
+            descLabel.textContent = '☀️ Полдень: солнце в зените на Юге, короткие тени под навесом';
+          } else if (sunHour <= 17.5) {
+            descLabel.textContent = '🌤️ Вторая половина дня: солнце плавно переходит к летней кухне';
+          } else if (sunHour <= 19.5) {
+            descLabel.textContent = '🌇 Вечер / закат: лучи с Запада освещают летнюю кухню и санузел';
+          } else {
+            descLabel.textContent = '🌙 Сумерки: вечернее освещение, включен теплый интерьерный свет';
+          }
+        }
+      }
+    }
+
+    function setSunTimeFromSlider(val) {
+      if (isSunPlaying) toggleSunAnimation();
+      updateSun(parseFloat(val), true);
+      updatePresetButtons(parseFloat(val));
+    }
+
+    function setSunPreset(hour) {
+      if (isSunPlaying) toggleSunAnimation();
+      updateSun(hour, true);
+      updatePresetButtons(hour);
+    }
+
+    function updatePresetButtons(hour) {
+      const presets = [
+        { id: 'sun-btn-8', val: 8.0 },
+        { id: 'sun-btn-13', val: 13.0 },
+        { id: 'sun-btn-18', val: 18.5 },
+        { id: 'sun-btn-20', val: 20.5 }
+      ];
+      presets.forEach(p => {
+        const btn = document.getElementById(p.id);
+        if (btn) btn.classList.toggle('active', Math.abs(p.val - hour) < 1.0);
+      });
+    }
+
+    function toggleSunAnimation() {
+      isSunPlaying = !isSunPlaying;
+      const btn = document.getElementById('btn-sun-play');
+      if (btn) {
+        btn.innerHTML = isSunPlaying ? '⏸ Пауза дня' : '▶ Запустить день (движение теней)';
+        btn.classList.toggle('active', isSunPlaying);
+      }
+    }
+
+    // Инициализация солнца на полдень (13:00)
+    updateSun(13.0, true);
+
+    // Чтение параметров URL для пресетов и быстрых ссылок
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('view')) {
+      setView(urlParams.get('view'), false);
+    }
+    if (urlParams.get('slabs') === '1') {
+      const chkS = document.getElementById('toggle-slabs');
+      if (chkS) chkS.checked = true;
+      toggleLayer('slabs', true);
+    }
+    if (urlParams.get('parapet') === '1') {
+      const chkP = document.getElementById('toggle-parapet');
+      if (chkP) chkP.checked = true;
+      toggleLayer('parapet', true);
+    }
+    if (urlParams.get('open') === '1') {
+      isOpeningsOpen = true;
+      targetOpeningsProgress = 1.0;
+      openingsProgress = 1.0;
+      updateOpeningsUI();
+      animOpenings.forEach(op => op.update(1.0));
+    }
+    if (urlParams.has('sun')) {
+      updateSun(parseFloat(urlParams.get('sun')), true);
+      updatePresetButtons(parseFloat(urlParams.get('sun')));
+    }
+
     function animate() {
       requestAnimationFrame(animate);
+
+      // Плавная интерполяция открытия створок
+      openingsProgress += (targetOpeningsProgress - openingsProgress) * 0.08;
+      animOpenings.forEach(op => op.update(openingsProgress));
+
+      // Анимация суточного хода солнца
+      if (isSunPlaying) {
+        sunHour += sunPlaySpeed;
+        if (sunHour > 21.0) sunHour = 6.0;
+        updateSun(sunHour, true);
+      }
+
       controls.update();
       renderer.render(scene, camera);
       updateLabels();
