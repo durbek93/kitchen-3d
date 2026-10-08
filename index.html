@@ -757,10 +757,10 @@
         </div>
 
         <div id="roof-step-title" style="font-size: 12px; font-weight: 600; color: #f8fafc; margin-bottom: 4px; line-height: 1.3;">
-          Шаг 9: Профнастил 0.45 мм, свес +7 см, ветровые планки, водосток
+          Шаг 9: Профнастил 0.45 мм (18 листов 7.06 м), свес +7 см, водосток
         </div>
         <div id="roof-step-desc" style="font-size: 11px; color: #94a3b8; margin-bottom: 10px; line-height: 1.35;">
-          Оцинкованный профнастил со свесом +7 см за стропила в желоб, лобовая доска, торцевые планки и 3 водостока.
+          18 оцинкованных листов 7.06 м со свесом +7 см за стропила в желоб, торцевые ветровые планки и 3 водостока.
         </div>
 
         <!-- Слайдер шагов и кнопки Назад / Вперёд -->
@@ -801,21 +801,21 @@
               </label>
             </div>
             <div class="control-row" style="margin-bottom: 2px;">
-              <span style="font-size: 11px;">Обрешётка 40×50 мм</span>
+              <span style="font-size: 11px;">Обрешётка 40×50 мм (шаг 50 см)</span>
               <label class="toggle-switch">
                 <input type="checkbox" id="toggle-layer-battens" checked onchange="toggleManualLayer('battens', this.checked)">
                 <span class="slider"></span>
               </label>
             </div>
             <div class="control-row" style="margin-bottom: 2px;">
-              <span style="font-size: 11px;">Стропила задние (3.9 м со свесом)</span>
+              <span style="font-size: 11px;">Стропила задние (добор 2.0 м со свесом)</span>
               <label class="toggle-switch">
                 <input type="checkbox" id="toggle-layer-rafter-rear" checked onchange="toggleManualLayer('rafterRear', this.checked)">
                 <span class="slider"></span>
               </label>
             </div>
             <div class="control-row" style="margin-bottom: 2px;">
-              <span style="font-size: 11px;">Стропила передние (3.5 м)</span>
+              <span style="font-size: 11px;">Стропила основные (целая доска 6.0 м)</span>
               <label class="toggle-switch">
                 <input type="checkbox" id="toggle-layer-rafter-front" checked onchange="toggleManualLayer('rafterFront', this.checked)">
                 <span class="slider"></span>
@@ -1312,14 +1312,14 @@
       metalness: 0.05
     });
 
-    // Светлая сосна: переднее стропило 3.50 м (до центрального прогона)
+    // Светлая сосна: основная стропильная доска 6.00 м (35×140 мм)
     const timberFrontMat = new THREE.MeshStandardMaterial({
       color: 0xdeb887, // Burlywood / светлая строганая сосна
       roughness: 0.70,
       metalness: 0.05
     });
 
-    // Янтарная сосна: заднее стропило 3.90 м (от прогона до свеса 50 см)
+    // Янтарная сосна: доборный отрезок 2.00 м (35×140 мм, нахлёст 1.0 м + свес 50 см)
     const timberRearMat = new THREE.MeshStandardMaterial({
       color: 0xb5783f, // тёплый янтарный оттенок для чёткой видимости стыка стропил
       roughness: 0.70,
@@ -1420,9 +1420,9 @@
     const filmGroup = new THREE.Group();          // Шаг 3: Пароизоляция плёнка 200 мкм
     const xpsGroup = new THREE.Group();           // Шаг 4: Теплоизоляция XPS Пеноплэкс 50 мм
     const postsGroup = new THREE.Group();         // Шаг 5: Опорные стойки, лежень, мауэрлат и прогоны
-    const raftersFrontGroup = new THREE.Group();  // Шаг 6A: Передние стропила 3.5 м (35×140 мм)
-    const raftersRearGroup = new THREE.Group();   // Шаг 6B: Задние стропила 3.9 м + стык на прогоне
-    const battensGroup = new THREE.Group();       // Шаг 7: Обрешётка 40×50 мм (шаг 38 см)
+    const raftersFrontGroup = new THREE.Group();  // Шаг 6A: Основные стропила 6.0 м (35×140 мм)
+    const raftersRearGroup = new THREE.Group();   // Шаг 6B: Доборы 2.0 м + нахлёст 1.0 м у свеса
+    const battensGroup = new THREE.Group();       // Шаг 7: Обрешётка 40×50 мм (шаг 50 см, 15 рядов)
     const folgoGroup = new THREE.Group();         // Шаг 8: Фольгоизол (теплоотражающий экран)
     const sheetGroup = new THREE.Group();         // Шаг 9: Профнастил 0.45 мм, +7 см свес, планки, водосток
 
@@ -2306,16 +2306,20 @@
     // -----------------------------------------------------------------
     // 3. ПАРОИЗОЛЯЦИОННАЯ ПЛЁНКА 200 МКМ (Шаг 3)
     // -----------------------------------------------------------------
+    // -----------------------------------------------------------------
+    // 3. ПАРОИЗОЛЯЦИОННАЯ ПЛЁНКА 200 МКМ (Шаг 3)
+    // -----------------------------------------------------------------
     function buildVaporFilm() {
       const slabTopY = WALL_TOP + SLAB_THICK; // 3.42 м
-      const filmW = 18.55;
-      const filmD = 6.45;
+      const filmW = 18.18; // 18.19 м между парапетами 38 см
+      const filmD = 6.47;  // 6.47 м от фасадного парапета до задней стены
+      const centerZ = -0.19; // центр между +3.045 и -3.425 м
 
       // Сплошной слой по всей площади плит и временного настила
       const vaporGeom = new THREE.PlaneGeometry(filmW, filmD);
       const vaporMesh = new THREE.Mesh(vaporGeom, vaporMat);
       vaporMesh.rotation.x = -Math.PI / 2;
-      vaporMesh.position.set(0, slabTopY + 0.003, 0);
+      vaporMesh.position.set(0, slabTopY + 0.003, centerZ);
       filmGroup.add(vaporMesh);
 
       // Заход плёнки на парапеты (вертикальные нахлёсты 15 см)
@@ -2326,12 +2330,12 @@
 
       const flapLeft = new THREE.Mesh(new THREE.PlaneGeometry(filmD, flapH), vaporMat);
       flapLeft.rotation.y = Math.PI / 2;
-      flapLeft.position.set(-9.095, slabTopY + flapH / 2, 0);
+      flapLeft.position.set(-9.09, slabTopY + flapH / 2, centerZ);
       filmGroup.add(flapLeft);
 
       const flapRight = new THREE.Mesh(new THREE.PlaneGeometry(filmD, flapH), vaporMat);
       flapRight.rotation.y = -Math.PI / 2;
-      flapRight.position.set(9.095, slabTopY + flapH / 2, 0);
+      flapRight.position.set(9.09, slabTopY + flapH / 2, centerZ);
       filmGroup.add(flapRight);
     }
     buildVaporFilm();
@@ -2343,11 +2347,12 @@
       const slabTopY = WALL_TOP + SLAB_THICK; // 3.42 м
       const xpsThick = 0.05;
       const xpsY = slabTopY + xpsThick / 2 + 0.006;
-      const xpsTotalW = 18.55;
-      const xpsTotalD = 6.45;
+      const xpsTotalW = 18.18;
+      const xpsTotalD = 6.47;
+      const centerZ = -0.19;
 
       const xpsMesh = new THREE.Mesh(new THREE.BoxGeometry(xpsTotalW, xpsThick, xpsTotalD), xpsMat);
-      xpsMesh.position.set(0, xpsY, 0);
+      xpsMesh.position.set(0, xpsY, centerZ);
       xpsMesh.castShadow = true;
       xpsMesh.receiveShadow = true;
 
@@ -2357,13 +2362,13 @@
 
       // Линии сетки швов плит Пеноплэкс (1.20 × 0.60 м со смещением)
       const seamPoints = [];
-      for (let z = -3.0; z <= 3.01; z += 0.60) {
+      for (let z = -3.10; z <= 2.91; z += 0.60) {
         seamPoints.push(new THREE.Vector3(-xpsTotalW / 2, xpsY + xpsThick / 2 + 0.001, z));
         seamPoints.push(new THREE.Vector3(xpsTotalW / 2, xpsY + xpsThick / 2 + 0.001, z));
       }
       for (let x = -8.4; x <= 8.41; x += 1.20) {
-        seamPoints.push(new THREE.Vector3(x, xpsY + xpsThick / 2 + 0.001, -xpsTotalD / 2));
-        seamPoints.push(new THREE.Vector3(x, xpsY + xpsThick / 2 + 0.001, xpsTotalD / 2));
+        seamPoints.push(new THREE.Vector3(x, xpsY + xpsThick / 2 + 0.001, centerZ - xpsTotalD / 2));
+        seamPoints.push(new THREE.Vector3(x, xpsY + xpsThick / 2 + 0.001, centerZ + xpsTotalD / 2));
       }
       const seamLinesGeom = new THREE.BufferGeometry().setFromPoints(seamPoints);
       const seamLines = new THREE.LineSegments(seamLinesGeom, xpsEdgeMat);
@@ -2380,93 +2385,118 @@
       const zRearEdge = -3.925;
       const deltaZ = zFront - zRearEdge; // 6.97 м
       const deltaY = 4.00 - 3.415;       // 0.585 м
+      const purlinW_Total = 18.18;       // внутренняя ширина между парапетами 38 см
 
       // А) Передний подстропильный брус 100×100 мм и вертикальные стойки h=48 см
-      const frontPurlin = createBox(18.55, 0.10, 0.10, timberMat, postsGroup);
+      const frontPurlin = createBox(purlinW_Total, 0.10, 0.10, timberMat, postsGroup);
       frontPurlin.position.set(0, 3.95, zFront - 0.05);
 
-      for (let x = -8.8; x <= 8.81; x += 2.4) {
+      for (let x = -8.6; x <= 8.61; x += 2.4) {
         const post = createBox(0.10, 0.48, 0.10, timberMat, postsGroup);
         post.position.set(x, 3.42 + 0.24, zFront - 0.05);
       }
 
       // Б) Задний мауэрлат: доска 35×140 мм плашмя по задней стене через рубероид
-      const ruberoidRear = createBox(18.55, 0.005, 0.16, new THREE.MeshBasicMaterial({ color: 0x1e293b }), postsGroup);
+      const ruberoidRear = createBox(purlinW_Total, 0.005, 0.16, new THREE.MeshBasicMaterial({ color: 0x1e293b }), postsGroup);
       ruberoidRear.position.set(0, slabTopY + 0.0025, -3.235);
 
-      const rearMauerlat = createBox(18.55, 0.035, 0.14, timberMat, postsGroup);
+      const rearMauerlat = createBox(purlinW_Total, 0.035, 0.14, timberMat, postsGroup);
       rearMauerlat.position.set(0, slabTopY + 0.005 + 0.0175, -3.235);
 
-      // В) Центральный опорный прогон над плитами (ось Z = -0.10 м)
-      const zMid = -0.10;
-      const bottomRafterAtMid = 3.415 + deltaY * (zMid - zRearEdge) / deltaZ; // ~3.736 м
+      // В) Промежуточный опорный прогон в середине 6-метрового пролёта (ось Z = +0.50 м)
+      const zMid = 0.50;
+      const bottomRafterAtMid = 3.415 + deltaY * (zMid - zRearEdge) / deltaZ; // ~3.786 м
       const purlinH = 0.10;
       const purlinW = 0.10;
-      const purlinCenterY = bottomRafterAtMid - purlinH / 2; // ~3.686 м
+      const purlinCenterY = bottomRafterAtMid - purlinH / 2; // ~3.736 м
 
-      // Лежень (доска 35×140 мм плашмя) по плите перекрытия
-      const midLezhen = createBox(18.55, 0.035, 0.14, timberMat, postsGroup);
+      const midLezhen = createBox(purlinW_Total, 0.035, 0.14, timberMat, postsGroup);
       midLezhen.position.set(0, slabTopY + 0.0175, zMid);
 
-      // Центральный продольный брус 100×100 мм
-      const midPurlin = createBox(18.55, purlinH, purlinW, timberMat, postsGroup);
+      const midPurlin = createBox(purlinW_Total, purlinH, purlinW, timberMat, postsGroup);
       midPurlin.position.set(0, purlinCenterY, zMid);
 
-      // Стойки под центральный прогон (высота h ~ 18 см, шаг 2.4 м)
-      const postH = (purlinCenterY - purlinH / 2) - (slabTopY + 0.035);
-      for (let x = -8.8; x <= 8.81; x += 2.4) {
-        const mPost = createBox(0.10, postH, 0.10, timberMat, postsGroup);
-        mPost.position.set(x, slabTopY + 0.035 + postH / 2, zMid);
+      const postHMid = (purlinCenterY - purlinH / 2) - (slabTopY + 0.035); // ~23 см
+      for (let x = -8.6; x <= 8.61; x += 2.4) {
+        const mPost = createBox(0.10, postHMid, 0.10, timberMat, postsGroup);
+        mPost.position.set(x, slabTopY + 0.035 + postHMid / 2, zMid);
+      }
+
+      // Г) Разгрузочный подстропильный прогон под стыком стропил (ось Z = -2.05 м)
+      // Расположен прямо под началом 1-метрового нахлёста доборов стропил!
+      const zSplice = -2.05;
+      const bottomRafterAtSplice = 3.415 + deltaY * (zSplice - zRearEdge) / deltaZ; // ~3.572 м
+      const splicePurlinCenterY = bottomRafterAtSplice - purlinH / 2; // ~3.522 м
+
+      const spliceLezhen = createBox(purlinW_Total, 0.035, 0.14, timberMat, postsGroup);
+      spliceLezhen.position.set(0, slabTopY + 0.0175, zSplice);
+
+      const splicePurlin = createBox(purlinW_Total, purlinH, purlinW, timberMat, postsGroup);
+      splicePurlin.position.set(0, splicePurlinCenterY, zSplice);
+
+      const postHSplice = Math.max(0.04, (splicePurlinCenterY - purlinH / 2) - (slabTopY + 0.035));
+      for (let x = -8.6; x <= 8.61; x += 2.4) {
+        const sPost = createBox(0.10, postHSplice, 0.10, timberMat, postsGroup);
+        sPost.position.set(x, slabTopY + 0.035 + postHSplice / 2, zSplice);
       }
     }
     buildPostsAndPurlins();
 
     // -----------------------------------------------------------------
-    // 6. СТРОПИЛЬНАЯ СИСТЕМА СО СТЫКОМ НАД ЦЕНТРАЛЬНЫМ ПРОГОНОМ (Шаг 6)
+    // 6. СТРОПИЛЬНАЯ СИСТЕМА: 6.0 М + ДОБОР 2.0 М С НАХЛЁСТОМ 1.0 М (Шаг 6)
     // -----------------------------------------------------------------
     function buildRafters() {
       const zFront = 3.045;
-      const zRearEdge = -3.925; // 50 см свес за задней стеной (-3.425 м)
+      const zRearEdge = -3.925; // свес 50 см за задней стеной (-3.425 м)
       const deltaZ = zFront - zRearEdge; // 6.97 м
       const deltaY = 4.00 - 3.415;       // 0.585 м
       const slopeAngle = -Math.atan2(deltaY, deltaZ); // ~ -4.80°
+      const cosA = Math.cos(slopeAngle);
 
       const rafterThickness = 0.035;
       const rafterHeight = 0.14;
 
-      // Параметры переднего отрезка стропил (3.50 м по скату):
-      // От zFront = +3.045 до Z = -0.44 м (перекрывает центральный прогон Z = -0.10 м на 34 см!)
-      const zFrontEnd = -0.44;
-      const frontRunZ = zFront - zFrontEnd; // 3.485 м
-      const frontLen = frontRunZ / Math.cos(slopeAngle); // ~3.50 м
-      const frontCenterZ = (zFront + zFrontEnd) / 2; // +1.3025 м
-      const frontEndY = 4.00 - deltaY * (zFront - zFrontEnd) / deltaZ; // ~3.707 м
-      const frontCenterY = (4.00 + frontEndY) / 2 + rafterHeight / 2; // ~3.924 м
+      // 1) ОСНОВНАЯ СТРОПИЛЬНАЯ ДОСКА (Целая доска 6.00 м по скату):
+      // От zFront = +3.045 м вниз по скату на 6.00 м.
+      // Конец доски: Z = +3.045 - 6.00 * cosA = -2.934 м.
+      const mainLen = 6.00;
+      const zMainEnd = zFront - mainLen * cosA; // ~ -2.934 м
+      const mainCenterZ = (zFront + zMainEnd) / 2; // ~ +0.0555 м
+      const mainEndY = 4.00 - deltaY * (zFront - zMainEnd) / deltaZ; // ~ 3.498 м
+      const mainCenterY = (4.00 + mainEndY) / 2 + rafterHeight / 2; // ~ 3.819 м
 
-      // Параметры заднего отрезка стропил (3.90 м по скату):
-      // От Z = +0.06 м (на 16 см выше прогона) до zRearEdge = -3.925 м (свес 50 см)
-      // Нахлёст между передней и задней досками: от +0.06 м до -0.44 м = 40 см (строго над прогоном Z = -0.10 м!)
-      const zRearStart = 0.06;
-      const rearRunZ = zRearStart - zRearEdge; // 3.985 м
-      const rearLen = rearRunZ / Math.cos(slopeAngle); // ~3.90 м
-      const rearCenterZ = (zRearStart + zRearEdge) / 2; // -1.9325 м
-      const rearStartY = 4.00 - deltaY * (zFront - zRearStart) / deltaZ; // ~3.749 м
-      const rearCenterY = (rearStartY + 3.415) / 2 + rafterHeight / 2; // ~3.652 м
+      // 2) ДОБОРНЫЙ ОТРЕЗОК СТРОПИЛА (Длина 2.00 м по скату):
+      // Доходит до карнизного свеса zRearEdge = -3.925 м.
+      // Начало отрезка: Z = -3.925 + 2.00 * cosA = -1.932 м.
+      // НАХЛЁСТ со стропилом 6.0 м: от -1.932 м до -2.934 м = ровно 1.00 м по скату!
+      const extLen = 2.00;
+      const zExtStart = zRearEdge + extLen * cosA; // ~ -1.932 м
+      const extCenterZ = (zExtStart + zRearEdge) / 2; // ~ -2.9285 м
+      const extStartY = 3.415 + deltaY * (zExtStart - zRearEdge) / deltaZ; // ~ 3.582 м
+      const extCenterY = (extStartY + 3.415) / 2 + rafterHeight / 2; // ~ 3.5685 м
 
-      // Шаг стропил ровно 80 см (0.80 м)
-      for (let x = -8.8; x <= 8.81; x += 0.80) {
-        // 1) Передняя стропильная нога (3.50 м, светлая сосна)
-        const rFront = createBox(rafterThickness, rafterHeight, frontLen, timberFrontMat, raftersFrontGroup);
-        rFront.rotation.x = slopeAngle;
-        rFront.position.set(x - rafterThickness / 2, frontCenterY, frontCenterZ);
+      // 24 стропильные линии (шаг ~78.2 см между парапетами 38 см)
+      const numLines = 24;
+      const xStart = -8.995;
+      const xEnd = 8.995;
+      const stepX = (xEnd - xStart) / (numLines - 1); // ~0.782 м
 
-        // 2) Задняя стропильная нога (3.90 м, янтарная сосна)
-        const rRear = createBox(rafterThickness, rafterHeight, rearLen, timberRearMat, raftersRearGroup);
-        rRear.rotation.x = slopeAngle;
-        rRear.position.set(x + rafterThickness / 2, rearCenterY, rearCenterZ);
+      for (let i = 0; i < numLines; i++) {
+        const x = xStart + i * stepX;
 
-        // 3) Стальные шпильки М12 с шайбами DIN 9021 в зоне нахлёста над прогоном (Z = -0.10 м)
-        const boltPositionsZ = [-0.02, -0.20]; // 2 шпильки в зоне нахлёста
+        // А) Основная доска 6.0 м (светлая строганая сосна)
+        const rMain = createBox(rafterThickness, rafterHeight, mainLen, timberFrontMat, raftersFrontGroup);
+        rMain.rotation.x = slopeAngle;
+        rMain.position.set(x - rafterThickness / 2, mainCenterY, mainCenterZ);
+
+        // Б) Доборный отрезок 2.0 м (янтарная сосна для чёткой видимости стыка)
+        const rExt = createBox(rafterThickness, rafterHeight, extLen, timberRearMat, raftersRearGroup);
+        rExt.rotation.x = slopeAngle;
+        rExt.position.set(x + rafterThickness / 2, extCenterY, extCenterZ);
+
+        // В) Стальные шпильки М12 с шайбами DIN 9021 в зоне нахлёста 1.0 м
+        // 4 шпильки равномерно по всей длине нахлёста (-1.93 м .. -2.93 м)
+        const boltPositionsZ = [-2.05, -2.32, -2.58, -2.85];
         boltPositionsZ.forEach(bz => {
           const bY = 4.00 - deltaY * (zFront - bz) / deltaZ + rafterHeight / 2;
           const boltGeom = new THREE.CylinderGeometry(0.009, 0.009, 0.09, 12);
@@ -2475,7 +2505,7 @@
           boltMesh.position.set(x, bY, bz);
           raftersRearGroup.add(boltMesh);
 
-          // Шайбы увеличенные по бокам
+          // Шайбы увеличенные по бокам с обеих сторон
           [-0.042, 0.042].forEach(wx => {
             const washerGeom = new THREE.CylinderGeometry(0.022, 0.022, 0.004, 16);
             const washer = new THREE.Mesh(washerGeom, boltMat);
@@ -2485,24 +2515,30 @@
           });
         });
 
-        // 4) Опорный монтажный усиленный уголок к центральному прогону
+        // Г) Опорные монтажные усиленные уголки к прогону под стыком и к мауэрлату
         const bracketGeom = new THREE.BoxGeometry(0.04, 0.07, 0.07);
-        const bracket = new THREE.Mesh(bracketGeom, boltMat);
-        const purlinTopY = 3.736;
-        bracket.position.set(x + rafterThickness + 0.02, purlinTopY + 0.025, -0.10);
-        raftersRearGroup.add(bracket);
+
+        // Уголок к прогону под стыком (Z = -2.05 м)
+        const b1 = new THREE.Mesh(bracketGeom, boltMat);
+        b1.position.set(x + rafterThickness + 0.02, 3.522 + 0.05, -2.05);
+        raftersRearGroup.add(b1);
+
+        // Уголок к заднему мауэрлату (Z = -3.235 м)
+        const b2 = new THREE.Mesh(bracketGeom, boltMat);
+        b2.position.set(x + rafterThickness + 0.02, 3.44 + 0.035, -3.235);
+        raftersRearGroup.add(b2);
       }
 
       // Лобовая доска карниза (доска 25×140 мм вдоль всего заднего свеса Z = -3.925 м)
       // Полностью закрывает торцы деревянных стропил снаружи!
-      const fasciaBoard = createBox(18.55, rafterHeight, 0.025, timberRearMat, raftersRearGroup);
+      const fasciaBoard = createBox(18.18, rafterHeight, 0.025, timberRearMat, raftersRearGroup);
       fasciaBoard.rotation.x = slopeAngle;
       fasciaBoard.position.set(0, 3.415 + rafterHeight / 2, zRearEdge - 0.0125);
     }
     buildRafters();
 
     // -----------------------------------------------------------------
-    // 7. ОБРЕШЁТКА 40×50 ММ (Шаг 38 см) (Шаг 7)
+    // 7. ОБРЕШЁТКА 40×50 ММ (Шаг 50 см, 15 рядов) (Шаг 7)
     // -----------------------------------------------------------------
     function buildBattens() {
       const zFront = 3.045;
@@ -2512,15 +2548,15 @@
       const slopeAngle = -Math.atan2(deltaY, deltaZ);
       const rafterTotalLen = Math.hypot(deltaZ, deltaY); // ~7.00 м
 
-      const battW = 18.55;
+      const battW = 18.18; // внутренняя ширина между парапетами 38 см
       const battThick = 0.04;
       const battDepth = 0.05;
-      const numBattens = 19; // 19 рядов бруска
-      const rafterBattSpan = rafterTotalLen - 0.06; // карнизный брусок отступает 6 см от торца стропил
-      const battStep = rafterBattSpan / (numBattens - 1); // шаг ~38.5 см
+      const numBattens = 15; // РОВНО 15 рядов бруска
+      const rafterBattSpan = rafterTotalLen - 0.06; // карнизный брусок отступает 6 см от края
+      const battStep = rafterBattSpan / (numBattens - 1); // шаг ровно ~49.6 см (~50 см)
 
       for (let i = 0; i < numBattens; i++) {
-        const sDist = i * battStep; // расстояние от верхнего края
+        const sDist = i * battStep; // расстояние от верхнего края ската
         const bZ = zFront - sDist * Math.cos(slopeAngle);
         const bY = 4.00 - sDist * Math.sin(-slopeAngle) + 0.14 + battThick / 2;
 
@@ -2541,7 +2577,7 @@
       const deltaY = 4.00 - 3.414;
       const slopeAngle = -Math.atan2(deltaY, deltaZ);
       const folgoLen = Math.hypot(deltaZ, deltaY);
-      const roofW = 18.55;
+      const roofW = 18.18;
 
       const centerZ = (zFront + zRearEdge) / 2;
       const centerY = (4.00 + 3.414) / 2 + 0.14 + 0.04 + 0.003;
@@ -2566,7 +2602,7 @@
       const deltaY = 4.00 - (3.415 - 0.070 * (0.585 / 6.97)); // ~0.591 м
       const slopeAngle = -Math.atan2(deltaY, deltaZ);
       const sheetLen = Math.hypot(deltaZ, deltaY); // ~7.06 м
-      const roofW = 18.55;
+      const roofW = 18.18; // между парапетами 38 см
 
       const centerZ = (zFront + zSheetRear) / 2;
       const centerY = (4.00 + 3.409) / 2 + 0.14 + 0.04 + 0.016;
@@ -2674,8 +2710,11 @@
       createDimLine([-9.7, 3.42, -3.6], [-9.7, 4.32, -3.6], "0.90 м (Парапет)", 0x38bdf8);
       createDimLine([0, 3.5, -3.425], [0, 3.5, -3.925], "0.50 м (Вылет кровли назад)", 0x10b981);
       createDimLine([1.0, 3.5, -3.925], [1.0, 3.5, -3.995], "+7 см (Вылет профлиста в желоб)", 0x10b981);
-      createDimLine([0.0, 3.85, -0.2], [0.8, 3.85, -0.2], "0.80 м (Шаг стропил 35×140)", 0xf59e0b);
-      createDimLine([0.0, 3.82, -0.44], [0.0, 3.82, 0.06], "0.40 м (Стык стропил над прогоном)", 0x38bdf8);
+      createDimLine([-9.09, 4.10, 0.5], [9.09, 4.10, 0.5], "18.19 м (Внутр. ширина кровли между парапетами 38 см)", 0x38bdf8);
+      createDimLine([0.0, 4.15, -3.425], [0.0, 4.15, 3.045], "6.47 м (Глубина кровли от парапета до задней стены)", 0x38bdf8);
+      createDimLine([0.0, 3.90, -0.782], [0.782, 3.90, -0.782], "0.78 м (Шаг стропил — 24 линии)", 0xf59e0b);
+      createDimLine([0.0, 3.70, -2.934], [0.0, 3.70, -1.932], "1.00 м (Нахлёст стропил на 4 шпильках М12)", 0x38bdf8);
+      createDimLine([2.0, 3.95, 0.0], [2.0, 3.95, -0.496], "0.50 м (Шаг обрешётки — 15 рядов)", 0x10b981);
       createDimLine([5.275, 3.55, -2.425], [9.275, 3.55, -2.425], "3.85 × 1.22 м (Временный настил лестницы)", 0xf59e0b);
       createDimLine([7.275, 3.55, -1.8], [7.275, 3.55, 3.0], "4 плиты 40-12 (Беседка)", 0x38bdf8);
       createDimLine([-9.10, 3.55, 0], [4.80, 3.55, 0], "10 плит 64-12 + 5 монолитных стяжек", 0x38bdf8);
@@ -2810,38 +2849,38 @@
       {
         step: 2,
         badge: "Шаг 2 / 9",
-        title: "Шаг 2: Парапетные стены (90 см) и оцинкованные крышки",
-        desc: "Кладка из жжёного кирпича 25/38 см высотой 90 см с оцинкованными крышками-фартуками."
+        title: "Шаг 2: Парапетные стены (90 см в 1.5 кирпича / 38 см)",
+        desc: "Кладка из жжёного кирпича 38 см высотой 90 см с оцинкованными крышками-фартуками (внутр. габарит 18.19 × 6.47 м)."
       },
       {
         step: 3,
         badge: "Шаг 3 / 9",
-        title: "Шаг 3: Пароизоляционная плёнка 200 мкм",
-        desc: "Сплошная плёнка по всей площади плит с нахлёстом 15 см на парапеты и проклейкой швов."
+        title: "Шаг 3: Пароизоляционная плёнка 200 мкм (18.19 × 6.47 м)",
+        desc: "Сплошная плёнка по всей площади плит (117.7 м²) с нахлёстом 15 см на парапеты и проклейкой швов (1 рулон 150 м²)."
       },
       {
         step: 4,
         badge: "Шаг 4 / 9",
-        title: "Шаг 4: Теплоизоляция XPS Пеноплэкс (50 мм)",
-        desc: "Плиты экструдированного пенополистирола 50 мм со смещением швов и L-кромкой (120 м²)."
+        title: "Шаг 4: Теплоизоляция XPS Пеноплэкс 50 мм (22 пачки)",
+        desc: "Плиты экструдированного пенополистирола 50 мм со смещением швов и L-кромкой (117.7 м² в свету, 22 пачки / 122.1 м²)."
       },
       {
         step: 5,
         badge: "Шаг 5 / 9",
         title: "Шаг 5: Опорные стойки, лежень, мауэрлат и прогоны",
-        desc: "Передний брус на стойках h=48 см, задний мауэрлат на рубероиде, центральный лежень и прогон h=18 см."
+        desc: "Передний брус h=48 см, задний мауэрлат, промежуточный прогон (Z=+0.5 м) и прогон под стыком стропил (Z=-2.05 м)."
       },
       {
         step: 6,
         badge: "Шаг 6 / 9",
-        title: "Шаг 6: Стропильная система (35×140 мм) со стыком на прогоне",
-        desc: "Передние стропила 3.5 м (светлые) и задние 3.9 м (янтарные). Стык внахлёст 40 см над прогоном на шпильках М12."
+        title: "Шаг 6: Стропила 6.0 м + добор 2.0 м с нахлёстом 1.0 м (32 доски)",
+        desc: "24 целые доски 6.0 м (светлые) + 24 добора 2.0 м (янтарные). Нахлёст 1.0 м у свеса на 4 шпильках М12. Всего 32 доски 6.0 м!"
       },
       {
         step: 7,
         badge: "Шаг 7 / 9",
-        title: "Шаг 7: Обрешётка из бруска 40×50 мм (шаг 38 см)",
-        desc: "19 рядов калиброванного антисептированного бруска 40×50 мм поперёк стропил (расход 357 пог. м)."
+        title: "Шаг 7: Обрешётка из бруска 40×50 мм (шаг 50 см, 15 рядов)",
+        desc: "15 рядов калиброванного антисептированного бруска 40×50 мм с шагом 50 см (чистый расход 273 пог. м / закупка 300 м)."
       },
       {
         step: 8,
@@ -2852,8 +2891,8 @@
       {
         step: 9,
         badge: "Шаг 9 / 9",
-        title: "Шаг 9: Профнастил 0.45 мм, свес +7 см, ветровые планки, водосток",
-        desc: "Оцинкованный профнастил со свесом +7 см за стропила в желоб, лобовая доска, торцевые планки и 3 водостока."
+        title: "Шаг 9: Профнастил 0.45 мм (18 листов 7.06 м), свес +7 см, водосток",
+        desc: "18 оцинкованных листов 7.06 м со свесом +7 см за стропила в желоб, торцевые ветровые планки и 3 водостока."
       }
     ];
 
@@ -3534,6 +3573,11 @@
       const t = urlParams.get('target').split(',').map(Number);
       if (t.length >= 3) controls.target.set(t[0], t[1], t[2]);
       controls.update();
+    }
+    if (urlParams.get('dims') === '0') {
+      toggleLayer('dimensions', false);
+      const chk = document.getElementById('toggle-dims');
+      if (chk) chk.checked = false;
     }
     if (urlParams.has('step')) {
       const st = parseInt(urlParams.get('step'));
