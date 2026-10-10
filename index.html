@@ -2811,9 +2811,9 @@
         const bx = xMin + k * dx;
 
         // 1. Вертикальная монтажная пластина (база на ж/б ригель)
-        // Высота 28 см (Y = 2.84..3.12 м), ширина 4.5 см, толщина 1.5 см
-        const wallBase = createBox(0.045, 0.28, 0.015, bracketMat, canopyGroup);
-        wallBase.position.set(bx, 2.98, 3.425 + 0.0075);
+        // Высота 26 см (Y = 2.84..3.10 м), ширина 4.5 см, толщина 1.5 см
+        const wallBase = createBox(0.045, 0.26, 0.015, bracketMat, canopyGroup);
+        wallBase.position.set(bx, 2.97, 3.425 + 0.0075);
 
         // 2. Два стальных анкера М10/М12 в тело бетонного ригеля
         [3.06, 2.90].forEach(by => {
@@ -2826,15 +2826,15 @@
           washer.position.set(bx, by, 3.425 + 0.016);
         });
 
-        // 3. Верхняя изогнутая несущая дуга кронштейна (12 сегментов вдоль дуги)
-        const armSegs = 12;
+        // 3. Верхняя изогнутая несущая дуга кронштейна (строго под поликарбонатом)
+        const armSegs = 14;
         for (let m = 0; m < armSegs; m++) {
           const s1 = m / armSegs;
           const s2 = (m + 1) / armSegs;
           const z1 = 3.425 + 1.25 * s1;
-          const y1 = 3.08 - 0.10 * s1 - 0.32 * s1 * s1;
+          const y1 = (3.10 - 0.10 * s1 - 0.32 * s1 * s1) - 0.022;
           const z2 = 3.425 + 1.25 * s2;
-          const y2 = 3.08 - 0.10 * s2 - 0.32 * s2 * s2;
+          const y2 = (3.10 - 0.10 * s2 - 0.32 * s2 * s2) - 0.022;
 
           const dz = z2 - z1;
           const dy = y2 - y1;
@@ -2846,15 +2846,15 @@
           seg.rotation.x = -angle;
         }
 
-        // 4. Нижний арочный подкос (усиление консоли от низа базы ригеля к центру вылета)
-        const braceSegs = 8;
+        // 4. Нижний арочный подкос (нисходящая плавная дуга от низа базы ригеля к носику желоба)
+        const braceSegs = 10;
         for (let m = 0; m < braceSegs; m++) {
-          const t1 = m / braceSegs;
-          const t2 = (m + 1) / braceSegs;
-          const z1 = 3.425 + 0.02 + 0.85 * t1;
-          const y1 = 2.86 + 0.16 * t1 - 0.10 * (1 - t1) * t1;
-          const z2 = 3.425 + 0.02 + 0.85 * t2;
-          const y2 = 2.86 + 0.16 * t2 - 0.10 * (1 - t2) * t2;
+          const u1 = m / braceSegs;
+          const u2 = (m + 1) / braceSegs;
+          const z1 = 3.435 + 1.165 * u1;
+          const y1 = 2.85 - 0.17 * u1 - 0.20 * u1 * (1 - u1);
+          const z2 = 3.435 + 1.165 * u2;
+          const y2 = 2.85 - 0.17 * u2 - 0.20 * u2 * (1 - u2);
 
           const dz = z2 - z1;
           const dy = y2 - y1;
@@ -2866,10 +2866,26 @@
           brace.rotation.x = -angle;
         }
 
-        // 5. Внутренняя фигурная перемычка фермы (как на фото)
-        const webStrut = createBox(0.025, 0.08, 0.025, bracketMat, canopyGroup);
-        webStrut.position.set(bx, 2.97, 3.425 + 0.45);
-        webStrut.rotation.x = 0.25;
+        // 5. Внутренние фигурные перемычки фермы (расположены строго в подкровельном пространстве между дугой и подкосом)
+        // Перемычка 1 (у стены)
+        const s1_z_bot = 3.75, s1_y_bot = 2.76;
+        const s1_z_top = 3.82, s1_y_top = 3.01;
+        const s1_dz = s1_z_top - s1_z_bot, s1_dy = s1_y_top - s1_y_bot;
+        const s1_len = Math.hypot(s1_dz, s1_dy);
+        const s1_ang = Math.atan2(s1_dy, s1_dz);
+        const strut1 = createBox(0.025, 0.025, s1_len, bracketMat, canopyGroup);
+        strut1.position.set(bx, (s1_y_bot + s1_y_top) / 2, (s1_z_bot + s1_z_top) / 2);
+        strut1.rotation.x = -s1_ang;
+
+        // Перемычка 2 (средняя часть консоли)
+        const s2_z_bot = 4.15, s2_y_bot = 2.70;
+        const s2_z_top = 4.22, s2_y_top = 2.88;
+        const s2_dz = s2_z_top - s2_z_bot, s2_dy = s2_y_top - s2_y_bot;
+        const s2_len = Math.hypot(s2_dz, s2_dy);
+        const s2_ang = Math.atan2(s2_dy, s2_dz);
+        const strut2 = createBox(0.025, 0.025, s2_len, bracketMat, canopyGroup);
+        strut2.position.set(bx, (s2_y_bot + s2_y_top) / 2, (s2_z_bot + s2_z_top) / 2);
+        strut2.rotation.x = -s2_ang;
 
         // 6. Передний замковый хомут крепления водостока
         const gutterHolder = createBox(0.035, 0.05, 0.05, bracketMat, canopyGroup);
