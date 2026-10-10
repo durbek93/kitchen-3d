@@ -2801,6 +2801,67 @@
         spout.position.set(sx + (sx > 0 ? 0.03 : -0.03), 2.65, 4.675);
       });
 
+      // -----------------------------------------------------------------
+      // МОНОЛИТНЫЙ ЛИТОЙ КРОНШТЕЙН (ТОЧНО ПО ФОТО-ОБРАЗЦУ ЮСАРАЙ / PALRAM)
+      // Векторный контур с двумя сквозными каплевидными окнами облегчения
+      // -----------------------------------------------------------------
+      const bracketShape = new THREE.Shape();
+      // 1. Задняя вертикальная опорная грань (монтажная база к ригелю)
+      bracketShape.moveTo(0, 2.85);
+      bracketShape.lineTo(0, 3.08);
+
+      // 2. Верхняя плавная несущая дуга (под поликарбонат)
+      const N_pts = 24;
+      for (let i = 1; i <= N_pts; i++) {
+        const u = (i / N_pts) * 1.22;
+        const v = 3.08 - 0.08 * u - 0.20 * u * u;
+        bracketShape.lineTo(u, v);
+      }
+
+      // 3. Переднее сопряжение с кольцом водостока
+      bracketShape.lineTo(1.22, 2.655);
+
+      // 4. Нижний грациозный арочный свод (обратно к низу стеновой базы)
+      for (let i = N_pts - 1; i >= 0; i--) {
+        const u = (i / N_pts) * 1.22;
+        const v = 2.85 - 0.16 * u - 0.20 * u * (1 - u / 1.22);
+        bracketShape.lineTo(u, v);
+      }
+      bracketShape.closePath();
+
+      // Окно 1: Заднее каплевидно-треугольное сквозное окно (как на фото)
+      const hole1 = new THREE.Path();
+      hole1.moveTo(0.05, 2.89);
+      hole1.lineTo(0.05, 3.03);
+      hole1.quadraticCurveTo(0.20, 3.01, 0.40, 2.94);
+      hole1.lineTo(0.38, 2.80);
+      hole1.quadraticCurveTo(0.20, 2.78, 0.05, 2.89);
+      hole1.closePath();
+      bracketShape.holes.push(hole1);
+
+      // Окно 2: Переднее аэродинамическое вытянутое каплевидное окно (как на фото)
+      const hole2 = new THREE.Path();
+      hole2.moveTo(0.48, 2.88);
+      hole2.quadraticCurveTo(0.70, 2.82, 0.98, 2.73);
+      hole2.quadraticCurveTo(0.98, 2.68, 0.90, 2.67);
+      hole2.quadraticCurveTo(0.68, 2.68, 0.47, 2.75);
+      hole2.closePath();
+      bracketShape.holes.push(hole2);
+
+      const extrudeSettings = {
+        steps: 1,
+        depth: 0.026,
+        bevelEnabled: true,
+        bevelThickness: 0.003,
+        bevelSize: 0.003,
+        bevelSegments: 2
+      };
+
+      const bracketBaseGeom = new THREE.ExtrudeGeometry(bracketShape, extrudeSettings);
+      bracketBaseGeom.translate(0, 0, -0.013);
+      bracketBaseGeom.rotateY(-Math.PI / 2);
+      bracketBaseGeom.translate(0, 0, 3.425);
+
       // 15 модульных литых кронштейнов с анкерным креплением в монолитный ригель
       const bracketCount = 15;
       const xMin = -9.25;
@@ -2810,13 +2871,18 @@
       for (let k = 0; k < bracketCount; k++) {
         const bx = xMin + k * dx;
 
-        // 1. Вертикальная монтажная пластина (база на ж/б ригель)
-        // Высота 26 см (Y = 2.84..3.10 м), ширина 4.5 см, толщина 1.5 см
-        const wallBase = createBox(0.045, 0.26, 0.015, bracketMat, canopyGroup);
-        wallBase.position.set(bx, 2.97, 3.425 + 0.0075);
+        // Литой монолитный кронштейн с каплевидными окнами (цельная деталь)
+        const bracketMesh = new THREE.Mesh(bracketBaseGeom, bracketMat);
+        bracketMesh.position.set(bx, 0, 0);
+        canopyGroup.add(bracketMesh);
 
-        // 2. Два стальных анкера М10/М12 в тело бетонного ригеля
-        [3.06, 2.90].forEach(by => {
+        // Переднее круглое кольцо-обойма под водосточный желоб (как на фото)
+        const socket = createCylinder(0.034, 0.034, 0.032, 24, bracketMat, canopyGroup);
+        socket.rotation.z = Math.PI / 2;
+        socket.position.set(bx, 2.665, 4.670);
+
+        // Стальные анкеры М10 в тело бетонного ригеля
+        [3.05, 2.88].forEach(by => {
           const bolt = createCylinder(0.011, 0.011, 0.025, 8, boltMat, canopyGroup);
           bolt.rotation.x = Math.PI / 2;
           bolt.position.set(bx, by, 3.425 + 0.02);
@@ -2826,70 +2892,25 @@
           washer.position.set(bx, by, 3.425 + 0.016);
         });
 
-        // 3. Верхняя изогнутая несущая дуга кронштейна (строго под поликарбонатом)
-        const armSegs = 14;
-        for (let m = 0; m < armSegs; m++) {
-          const s1 = m / armSegs;
-          const s2 = (m + 1) / armSegs;
+        // Верхняя прижимная арочная накладка поверх поликарбоната (черная полоса вдоль кронштейна)
+        const stripSegs = 14;
+        for (let m = 0; m < stripSegs; m++) {
+          const s1 = m / stripSegs;
+          const s2 = (m + 1) / stripSegs;
           const z1 = 3.425 + 1.25 * s1;
-          const y1 = (3.10 - 0.10 * s1 - 0.32 * s1 * s1) - 0.022;
+          const y1 = (3.10 - 0.10 * s1 - 0.32 * s1 * s1) + 0.004;
           const z2 = 3.425 + 1.25 * s2;
-          const y2 = (3.10 - 0.10 * s2 - 0.32 * s2 * s2) - 0.022;
+          const y2 = (3.10 - 0.10 * s2 - 0.32 * s2 * s2) + 0.004;
 
           const dz = z2 - z1;
           const dy = y2 - y1;
           const segLen = Math.hypot(dz, dy);
           const angle = Math.atan2(dy, dz);
 
-          const seg = createBox(0.035, 0.035, segLen, bracketMat, canopyGroup);
-          seg.position.set(bx, (y1 + y2) / 2, (z1 + z2) / 2);
-          seg.rotation.x = -angle;
+          const capStrip = createBox(0.024, 0.006, segLen, bracketMat, canopyGroup);
+          capStrip.position.set(bx, (y1 + y2) / 2, (z1 + z2) / 2);
+          capStrip.rotation.x = -angle;
         }
-
-        // 4. Нижний арочный подкос (нисходящая плавная дуга от низа базы ригеля к носику желоба)
-        const braceSegs = 10;
-        for (let m = 0; m < braceSegs; m++) {
-          const u1 = m / braceSegs;
-          const u2 = (m + 1) / braceSegs;
-          const z1 = 3.435 + 1.165 * u1;
-          const y1 = 2.85 - 0.17 * u1 - 0.20 * u1 * (1 - u1);
-          const z2 = 3.435 + 1.165 * u2;
-          const y2 = 2.85 - 0.17 * u2 - 0.20 * u2 * (1 - u2);
-
-          const dz = z2 - z1;
-          const dy = y2 - y1;
-          const segLen = Math.hypot(dz, dy);
-          const angle = Math.atan2(dy, dz);
-
-          const brace = createBox(0.030, 0.030, segLen, bracketMat, canopyGroup);
-          brace.position.set(bx, (y1 + y2) / 2, (z1 + z2) / 2);
-          brace.rotation.x = -angle;
-        }
-
-        // 5. Внутренние фигурные перемычки фермы (расположены строго в подкровельном пространстве между дугой и подкосом)
-        // Перемычка 1 (у стены)
-        const s1_z_bot = 3.75, s1_y_bot = 2.76;
-        const s1_z_top = 3.82, s1_y_top = 3.01;
-        const s1_dz = s1_z_top - s1_z_bot, s1_dy = s1_y_top - s1_y_bot;
-        const s1_len = Math.hypot(s1_dz, s1_dy);
-        const s1_ang = Math.atan2(s1_dy, s1_dz);
-        const strut1 = createBox(0.025, 0.025, s1_len, bracketMat, canopyGroup);
-        strut1.position.set(bx, (s1_y_bot + s1_y_top) / 2, (s1_z_bot + s1_z_top) / 2);
-        strut1.rotation.x = -s1_ang;
-
-        // Перемычка 2 (средняя часть консоли)
-        const s2_z_bot = 4.15, s2_y_bot = 2.70;
-        const s2_z_top = 4.22, s2_y_top = 2.88;
-        const s2_dz = s2_z_top - s2_z_bot, s2_dy = s2_y_top - s2_y_bot;
-        const s2_len = Math.hypot(s2_dz, s2_dy);
-        const s2_ang = Math.atan2(s2_dy, s2_dz);
-        const strut2 = createBox(0.025, 0.025, s2_len, bracketMat, canopyGroup);
-        strut2.position.set(bx, (s2_y_bot + s2_y_top) / 2, (s2_z_bot + s2_z_top) / 2);
-        strut2.rotation.x = -s2_ang;
-
-        // 6. Передний замковый хомут крепления водостока
-        const gutterHolder = createBox(0.035, 0.05, 0.05, bracketMat, canopyGroup);
-        gutterHolder.position.set(bx, 2.67, 4.665);
       }
     }
     buildCanopy();
