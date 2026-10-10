@@ -749,10 +749,10 @@
 
       </div>
 
-      <!-- СЕКЦИЯ: ПОСЛОЙНЫЙ МОНТАЖ КРОВЛИ (STEPPER 0-9) -->
+      <!-- СЕКЦИЯ: ПОСЛОЙНЫЙ МОНТАЖ КРОВЛИ (STEPPER -1...9) -->
       <div class="panel-section" style="border-left: 3px solid #38bdf8; background: rgba(56, 189, 248, 0.05); padding: 10px; border-radius: 8px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span class="panel-title" style="margin-bottom: 0; color: #38bdf8;">🏗️ Монтаж кровли (0–9)</span>
+          <span class="panel-title" style="margin-bottom: 0; color: #38bdf8;">🏗️ Монтаж кровли (-1...9)</span>
           <span id="roof-step-badge" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: #38bdf8; color: #0f172a;">Шаг 9 / 9</span>
         </div>
 
@@ -766,7 +766,7 @@
         <!-- Слайдер шагов и кнопки Назад / Вперёд -->
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
           <button type="button" class="btn-seg" style="flex: 0 0 32px; height: 32px; padding: 0; font-size: 14px; font-weight: bold; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;" onclick="prevRoofStep()" title="Предыдущий шаг">◀</button>
-          <input type="range" min="0" max="9" value="9" step="1" class="range-slider" id="roof-step-slider" oninput="setRoofStep(parseInt(this.value))" style="flex: 1;">
+          <input type="range" min="-1" max="9" value="9" step="1" class="range-slider" id="roof-step-slider" oninput="setRoofStep(parseInt(this.value))" style="flex: 1;">
           <button type="button" class="btn-seg" style="flex: 0 0 32px; height: 32px; padding: 0; font-size: 14px; font-weight: bold; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;" onclick="nextRoofStep()" title="Следующий шаг">▶</button>
         </div>
 
@@ -779,7 +779,7 @@
         </div>
 
         <button type="button" class="btn-seg" onclick="hideAllRoof()" style="width: 100%; font-size: 11px; padding: 6px 4px; background: rgba(100, 116, 139, 0.15); border: 1px solid rgba(100, 116, 139, 0.3); color: #cbd5e1; margin-bottom: 6px;">
-          👁️ Скрыть всю крышу (интерьер)
+          👁️ Скрыть всю крышу (интерьер, поз. -1)
         </button>
 
         <!-- Разворачиваемые ручные тумблеры слоёв -->
@@ -882,6 +882,14 @@
           <span>Колонны и ригель</span>
           <label class="toggle-switch">
             <input type="checkbox" id="toggle-columns" checked onchange="toggleLayer('columns', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-row">
+          <span>Козырёк (поликарбонат)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-canopy" checked onchange="toggleLayer('canopy', this.checked)">
             <span class="slider"></span>
           </label>
         </div>
@@ -1439,6 +1447,7 @@
     const plinthsGroup = new THREE.Group();
     const floorsGroup = new THREE.Group();
     const groundGroup = new THREE.Group();
+    const canopyGroup = new THREE.Group();        // Козырёк из дымчатого монолитного поликарбоната
 
     // Добавление в сцену
     scene.add(stairCoverGroup);
@@ -1460,6 +1469,9 @@
     scene.add(plinthsGroup);
     scene.add(floorsGroup);
     scene.add(groundGroup);
+    scene.add(canopyGroup);
+
+    canopyGroup.visible = true;
 
     // Начальная видимость групп кровли
     stairCoverGroup.visible = true;
@@ -2682,6 +2694,190 @@
     }
     buildSheetAndFinishing();
 
+    // -------------------------------------------------------------
+    // ФАСАДНЫЙ НАВЕС-КОЗЫРЁК ИЗ ДЫМЧАТОГО МОНОЛИТНОГО ПОЛИКАРБОНАТА
+    // Анкерное крепление в монолитный железобетонный ригель (h=40 см, b=38 см)
+    // Вылет 1.25 м, длина 18.50 м, 15 литых графитовых кронштейнов
+    // -------------------------------------------------------------
+    function buildCanopy() {
+      // Монолитный поликарбонат дымчатого цвета (smoky bronze tint)
+      const polycarbMat = new THREE.MeshPhysicalMaterial({
+        color: 0x3a2e22, // Выразительный дымчато-бронзовый оттенок
+        roughness: 0.15,
+        metalness: 0.15,
+        transparent: true,
+        opacity: 0.52,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.08,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+
+      // Литые кронштейны (чёрный матовый графит / антрацит)
+      const bracketMat = new THREE.MeshStandardMaterial({
+        color: 0x1e293b,
+        roughness: 0.45,
+        metalness: 0.80
+      });
+
+      // Водоотводный желоб и пристенный профиль
+      const gutterMat = new THREE.MeshStandardMaterial({
+        color: 0x0f172a,
+        roughness: 0.35,
+        metalness: 0.85
+      });
+
+      // Оцинкованные анкеры (сталь)
+      const boltMat = new THREE.MeshStandardMaterial({
+        color: 0x94a3b8,
+        roughness: 0.25,
+        metalness: 0.95
+      });
+
+      function createCylinder(rTop, rBot, height, segs, mat, group) {
+        const geom = new THREE.CylinderGeometry(rTop, rBot, height, segs);
+        const mesh = new THREE.Mesh(geom, mat);
+        if (group) group.add(mesh);
+        return mesh;
+      }
+
+      // Геометрия изогнутого полотна поликарбоната:
+      // Вылет: 1.25 м (от стены Z = 3.425 м до Z = 4.675 м)
+      // Длина: 18.50 м (от X = -9.25 м до X = +9.25 м)
+      // Высота у стены: Y = 3.10 м (ригель от 2.80 до 3.20 м)
+      // Высота у переднего свеса: Y = 2.68 м (комфортный проход > 2.15 м над цоколем)
+      const nx = 64;
+      const nz = 24;
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+
+      for (let j = 0; j <= nz; j++) {
+        const s = j / nz;
+        const z = 3.425 + 1.25 * s;
+        const y = 3.10 - 0.10 * s - 0.32 * s * s;
+        for (let i = 0; i <= nx; i++) {
+          const u = i / nx;
+          const x = -9.25 + 18.50 * u;
+          positions.push(x, y, z);
+          uvs.push(u, s);
+        }
+      }
+
+      for (let j = 0; j < nz; j++) {
+        for (let i = 0; i < nx; i++) {
+          const a = j * (nx + 1) + i;
+          const b = j * (nx + 1) + (i + 1);
+          const c = (j + 1) * (nx + 1) + i;
+          const d = (j + 1) * (nx + 1) + (i + 1);
+          indices.push(a, b, c);
+          indices.push(b, d, c);
+        }
+      }
+
+      const polyGeom = new THREE.BufferGeometry();
+      polyGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      polyGeom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      polyGeom.setIndex(indices);
+      polyGeom.computeVertexNormals();
+
+      const polyMesh = new THREE.Mesh(polyGeom, polycarbMat);
+      polyMesh.renderOrder = 10;
+      canopyGroup.add(polyMesh);
+
+      // Пристенная прижимная планка (алюминий с уплотнителем EPDM)
+      const wallStrip = createBox(18.52, 0.05, 0.02, gutterMat, canopyGroup);
+      wallStrip.position.set(0, 3.115, 3.425 + 0.01);
+
+      // Передний круглый водоотводный профиль (желоб с продольным пазом)
+      const frontGutter = createCylinder(0.025, 0.025, 18.54, 16, gutterMat, canopyGroup);
+      frontGutter.rotation.z = Math.PI / 2;
+      frontGutter.position.set(0, 2.67, 4.675);
+
+      // Торцевые сливные носики («Выход воды») с левой и правой стороны
+      [-9.27, 9.27].forEach(sx => {
+        const spout = createCylinder(0.020, 0.020, 0.08, 12, gutterMat, canopyGroup);
+        spout.rotation.z = (sx > 0 ? -Math.PI / 4 : Math.PI / 4);
+        spout.position.set(sx + (sx > 0 ? 0.03 : -0.03), 2.65, 4.675);
+      });
+
+      // 15 модульных литых кронштейнов с анкерным креплением в монолитный ригель
+      const bracketCount = 15;
+      const xMin = -9.25;
+      const xMax = 9.25;
+      const dx = (xMax - xMin) / (bracketCount - 1);
+
+      for (let k = 0; k < bracketCount; k++) {
+        const bx = xMin + k * dx;
+
+        // 1. Вертикальная монтажная пластина (база на ж/б ригель)
+        // Высота 28 см (Y = 2.84..3.12 м), ширина 4.5 см, толщина 1.5 см
+        const wallBase = createBox(0.045, 0.28, 0.015, bracketMat, canopyGroup);
+        wallBase.position.set(bx, 2.98, 3.425 + 0.0075);
+
+        // 2. Два стальных анкера М10/М12 в тело бетонного ригеля
+        [3.06, 2.90].forEach(by => {
+          const bolt = createCylinder(0.011, 0.011, 0.025, 8, boltMat, canopyGroup);
+          bolt.rotation.x = Math.PI / 2;
+          bolt.position.set(bx, by, 3.425 + 0.02);
+
+          const washer = createCylinder(0.016, 0.016, 0.005, 12, boltMat, canopyGroup);
+          washer.rotation.x = Math.PI / 2;
+          washer.position.set(bx, by, 3.425 + 0.016);
+        });
+
+        // 3. Верхняя изогнутая несущая дуга кронштейна (12 сегментов вдоль дуги)
+        const armSegs = 12;
+        for (let m = 0; m < armSegs; m++) {
+          const s1 = m / armSegs;
+          const s2 = (m + 1) / armSegs;
+          const z1 = 3.425 + 1.25 * s1;
+          const y1 = 3.08 - 0.10 * s1 - 0.32 * s1 * s1;
+          const z2 = 3.425 + 1.25 * s2;
+          const y2 = 3.08 - 0.10 * s2 - 0.32 * s2 * s2;
+
+          const dz = z2 - z1;
+          const dy = y2 - y1;
+          const segLen = Math.hypot(dz, dy);
+          const angle = Math.atan2(dy, dz);
+
+          const seg = createBox(0.035, 0.035, segLen, bracketMat, canopyGroup);
+          seg.position.set(bx, (y1 + y2) / 2, (z1 + z2) / 2);
+          seg.rotation.x = -angle;
+        }
+
+        // 4. Нижний арочный подкос (усиление консоли от низа базы ригеля к центру вылета)
+        const braceSegs = 8;
+        for (let m = 0; m < braceSegs; m++) {
+          const t1 = m / braceSegs;
+          const t2 = (m + 1) / braceSegs;
+          const z1 = 3.425 + 0.02 + 0.85 * t1;
+          const y1 = 2.86 + 0.16 * t1 - 0.10 * (1 - t1) * t1;
+          const z2 = 3.425 + 0.02 + 0.85 * t2;
+          const y2 = 2.86 + 0.16 * t2 - 0.10 * (1 - t2) * t2;
+
+          const dz = z2 - z1;
+          const dy = y2 - y1;
+          const segLen = Math.hypot(dz, dy);
+          const angle = Math.atan2(dy, dz);
+
+          const brace = createBox(0.030, 0.030, segLen, bracketMat, canopyGroup);
+          brace.position.set(bx, (y1 + y2) / 2, (z1 + z2) / 2);
+          brace.rotation.x = -angle;
+        }
+
+        // 5. Внутренняя фигурная перемычка фермы (как на фото)
+        const webStrut = createBox(0.025, 0.08, 0.025, bracketMat, canopyGroup);
+        webStrut.position.set(bx, 2.97, 3.425 + 0.45);
+        webStrut.rotation.x = 0.25;
+
+        // 6. Передний замковый хомут крепления водостока
+        const gutterHolder = createBox(0.035, 0.05, 0.05, bracketMat, canopyGroup);
+        gutterHolder.position.set(bx, 2.67, 4.665);
+      }
+    }
+    buildCanopy();
+
     // Dimension Lines (Строго по рабочему чертежу КК-1895-АС-01)
     const dimLineMaterials = [];
 
@@ -2897,10 +3093,15 @@
     ];
 
     function setRoofStep(step) {
-      if (step < 0) step = 0;
+      if (step < -1) step = -1;
       if (step > 9) step = 9;
       currentRoofStep = step;
       isRoofManualMode = false;
+
+      if (step === -1) {
+        hideAllRoof();
+        return;
+      }
 
       // Применяем видимость слоёв по цепочке (накопительный монтаж 0..step)
       slabsGroup.visible = (step >= 0);
@@ -2941,10 +3142,13 @@
     }
 
     function prevRoofStep() {
-      if (currentRoofStep > 0) setRoofStep(currentRoofStep - 1);
+      if (currentRoofStep > -1) setRoofStep(currentRoofStep - 1);
     }
 
     function hideAllRoof() {
+      currentRoofStep = -1;
+      isRoofManualMode = false;
+
       slabsGroup.visible = false;
       stairCoverGroup.visible = false;
       parapetGroup.visible = false;
@@ -2957,16 +3161,19 @@
       folgoGroup.visible = false;
       sheetGroup.visible = false;
 
+      const slider = document.getElementById('roof-step-slider');
+      if (slider) slider.value = -1;
+
       const badge = document.getElementById('roof-step-badge');
       if (badge) {
-        badge.textContent = 'Интерьер';
+        badge.textContent = 'Интерьер (-1)';
         badge.style.background = '#64748b';
         badge.style.color = '#f8fafc';
       }
       const title = document.getElementById('roof-step-title');
-      if (title) title.textContent = 'Крыша и перекрытие скрыты';
+      if (title) title.textContent = 'Крыша и перекрытие скрыты (Интерьер)';
       const desc = document.getElementById('roof-step-desc');
-      if (desc) desc.textContent = 'Отображаются стены, перегородки и проёмы. Для возврата к крыше нажмите любой шаг.';
+      if (desc) desc.textContent = 'Отображаются стены, перегородки и проёмы. Ползунок в начальной позиции (-1). Для возврата к кровле сдвиньте ползунок вправо.';
 
       syncManualCheckboxes();
     }
@@ -3011,6 +3218,7 @@
       setChk('toggle-layer-battens', battensGroup.visible);
       setChk('toggle-layer-folgo', folgoGroup.visible);
       setChk('toggle-layer-sheet', sheetGroup.visible);
+      setChk('toggle-canopy', canopyGroup.visible);
     }
 
     function toggleLayer(layer, visible) {
@@ -3024,6 +3232,7 @@
       if (layer === 'slabs') slabsGroup.visible = visible;
       if (layer === 'walls') wallsGroup.visible = visible;
       if (layer === 'columns') columnsGroup.visible = visible;
+      if (layer === 'canopy') canopyGroup.visible = visible;
       if (layer === 'glass') glassGroup.visible = visible;
       if (layer === 'dimensions') {
         dimensionsGroup.visible = visible;
