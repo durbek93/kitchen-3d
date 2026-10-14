@@ -271,6 +271,7 @@
       accent-color: var(--primary);
     }
 
+    .btn-seg {
       flex: 1;
       background: transparent;
       border: none;
